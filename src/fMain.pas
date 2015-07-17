@@ -165,7 +165,7 @@ end;
 
 procedure TF_Main.MI_AboutClick(Sender: TObject);
 begin
- Application.MessageBox(PChar('Panel Merger'+#13#10+'Verze: '+GetVer(Application.ExeName)+#13#10+'Vytvoøil Jan Horáèek (c) 2013-2014 pro KMŽ Brno I'),'Info',MB_OK OR MB_ICONINFORMATION);
+ Application.MessageBox(PChar('hJOPmerger'+#13#10+'Verze: '+GetVer(Application.ExeName)+#13#10+'Vytvoøil Jan Horáèek (c) 2013-2014 pro KMŽ Brno I'),'Info',MB_OK OR MB_ICONINFORMATION);
 end;
 
 procedure TF_Main.MI_AppExitClick(Sender: TObject);

@@ -3,7 +3,7 @@ object F_Main: TF_Main
   Top = 0
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
-  Caption = 'Panel Merger'
+  Caption = 'hJOPmerger'
   ClientHeight = 592
   ClientWidth = 645
   Color = clBtnFace

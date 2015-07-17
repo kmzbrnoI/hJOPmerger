@@ -1,4 +1,4 @@
-program PanelMerger;
+program hJOPmerger;
 
 //tento program slucuje naeditovane panely (*.opnl) do 1 souboru, ktery potrebuje server (= technologie) (*.spnl)
 
@@ -16,7 +16,7 @@ var i:Integer;
 
 begin
   Application.Initialize;
-  Application.Title := 'Panel Merger';
+  Application.Title := 'hJOPmerger';
   Application.MainFormOnTaskbar := True;
   Application.CreateForm(TF_Main, F_Main);
   Application.CreateForm(TF_DataCheck, F_DataCheck);
