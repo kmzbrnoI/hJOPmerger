@@ -1,4 +1,4 @@
-unit Main;
+unit fMain;
 
 interface
 
@@ -65,7 +65,7 @@ implementation
 
 {$R *.dfm}
 
-uses Verze, frmDataCheck;
+uses Verze, fDataCheck;
 
 procedure TF_Main.A_CheckExecute(Sender: TObject);
 var return,i:Integer;

@@ -4,11 +4,11 @@ program PanelMerger;
 
 uses
   Forms,
-  Main in 'Main.pas' {F_Main},
+  fMain in 'fMain.pas' {F_Main},
   Verze in 'Verze.pas',
   Panel in 'Panel.pas',
   OblastRizeni in 'OblastRizeni.pas',
-  frmDataCheck in 'frmDataCheck.pas' {F_DataCheck};
+  fDataCheck in 'fDataCheck.pas' {F_DataCheck};
 
 {$R *.res}
 

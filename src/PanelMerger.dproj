@@ -45,13 +45,13 @@
 			<DelphiCompile Include="PanelMerger.dpr">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="Main.pas">
+			<DCCReference Include="fMain.pas">
 				<Form>F_Main</Form>
 			</DCCReference>
 			<DCCReference Include="Verze.pas"/>
 			<DCCReference Include="Panel.pas"/>
 			<DCCReference Include="OblastRizeni.pas"/>
-			<DCCReference Include="frmDataCheck.pas">
+			<DCCReference Include="fDataCheck.pas">
 				<Form>F_DataCheck</Form>
 			</DCCReference>
 			<BuildConfiguration Include="Base">
@@ -85,7 +85,7 @@
 						<VersionInfo Name="AutoIncBuild">False</VersionInfo>
 						<VersionInfo Name="MajorVer">1</VersionInfo>
 						<VersionInfo Name="MinorVer">2</VersionInfo>
-						<VersionInfo Name="Release">3</VersionInfo>
+						<VersionInfo Name="Release">4</VersionInfo>
 						<VersionInfo Name="Build">0</VersionInfo>
 						<VersionInfo Name="Debug">False</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
@@ -98,7 +98,7 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">1.2.3.0</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">1.2.4.0</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName">PanelMerger</VersionInfoKeys>
 						<VersionInfoKeys Name="LegalCopyright">Jan Horacek 2013-2014</VersionInfoKeys>
 						<VersionInfoKeys Name="LegalTrademarks">Jan Horacek 2013-2014</VersionInfoKeys>
