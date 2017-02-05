@@ -379,7 +379,7 @@ begin
 
  //samotne nacitani dat
  try
-   inifile := TMemIniFile.Create(filename);
+   inifile := TMemIniFile.Create(filename, TEncoding.UTF8);
  except
    Result := 100;
    Exit;
@@ -817,7 +817,7 @@ begin
  DeleteFile(filename);
 
  try
-   ini := TMemIniFile.Create(filename);
+   ini := TMemIniFile.Create(filename, TEncoding.UTF8);
  except
    Result := 1;
    Exit;
