@@ -20,6 +20,7 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
+			<DCC_UsePackage>vcl;rtl;vclx;vclactnband;dbrtl;vcldb;vcldbx;bdertl;dsnap;dsnapcon;TeeUI;TeeDB;Tee;adortl;vclib;ibxpress;IndyCore;IndySystem;IndyProtocols;xmlrtl;inet;intrawebdb_100_120;Intraweb_100_120;VclSmp;vclie;websnap;webdsnap;inetdbbde;inetdbxpress;soaprtl;vclribbon;DbxCommonDriver;DbxClientDriver;DBXInterBaseDriver;DBXMySQLDriver;dbexpress;dbxcds;DelphiX190;CPortLibD2009;DCPdelphi2009;JclDeveloperTools;Jcl;JclVcl;JclContainers</DCC_UsePackage>
 			<DCC_DcuOutput>..\Outunit\</DCC_DcuOutput>
 			<DCC_ExeOutput>..\Output\</DCC_ExeOutput>
 			<DCC_DependencyCheckOutputName>..\Output\hJOPmerger.exe</DCC_DependencyCheckOutputName>
@@ -86,7 +87,7 @@
 						<VersionInfo Name="AutoIncBuild">False</VersionInfo>
 						<VersionInfo Name="MajorVer">1</VersionInfo>
 						<VersionInfo Name="MinorVer">3</VersionInfo>
-						<VersionInfo Name="Release">1</VersionInfo>
+						<VersionInfo Name="Release">2</VersionInfo>
 						<VersionInfo Name="Build">0</VersionInfo>
 						<VersionInfo Name="Debug">False</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
@@ -99,7 +100,7 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">1.3.1.0</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">1.3.2.0</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName">hJOPmerger</VersionInfoKeys>
 						<VersionInfoKeys Name="LegalCopyright">Jan Horacek 2013-2015</VersionInfoKeys>
 						<VersionInfoKeys Name="LegalTrademarks">Jan Horacek 2013-2015</VersionInfoKeys>
@@ -108,6 +109,10 @@
 						<VersionInfoKeys Name="ProductVersion">1.0.0.0</VersionInfoKeys>
 						<VersionInfoKeys Name="Comments">Vyvijeno pro KMZ-Brno I</VersionInfoKeys>
 					</VersionInfoKeys>
+					<Excluded_Packages>
+						<Excluded_Packages Name="$(BDS)\bin\dcloffice2k120.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+						<Excluded_Packages Name="$(BDS)\bin\dclofficexp120.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+					</Excluded_Packages>
 				</Delphi.Personality>
 			</BorlandProject>
 			<ProjectFileVersion>12</ProjectFileVersion>

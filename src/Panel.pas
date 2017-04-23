@@ -50,7 +50,7 @@ TUsek = class(TGraphBlok)
    Data:array[0.._MAX_SYMBOLS] of TReliefSym;
    Count:Byte;
   end;//Symbols
-  staniceni_kolej:boolean;
+  cislo_koleje:string;
   // zbytek neni potreba
 end;
 
@@ -450,10 +450,7 @@ begin
     end;//for j
    if ((blk as TUsek).Symbols.Count = 0) then Self.Errors.Add('WARNING: '+ExtractFileName(filename)+' Relief usek '+IntToStr(i)+': neni zadny symbol');
 
-   if (inifile.ReadString('U'+IntToStr(i),'P','') = '') then
-    (blk as TUsek).staniceni_kolej := false
-   else
-    (blk as TUsek).staniceni_kolej := true;
+   (blk as TUsek).cislo_koleje := inifile.ReadString('U'+IntToStr(i),'N','');
 
    Self.AddGraphBlk(blk, id, usek);
   end;//for i
@@ -741,7 +738,7 @@ end;//procedure
 function TRelief.CheckValid():TStrings;
 var str:string;
     i,j:Integer;
-    nav:TNavestidlo;
+    nav, nav2:TNavestidlo;
     vyh:TVyhybka;
 begin
  Self.Errors.Add('--- Spustena 2. faze validace: validator objektovych navaznosti ---');
@@ -758,6 +755,19 @@ begin
     end;//for j
 
    /////////////
+   //kontrola stejneho cisla koleje
+   if (Self.TechBloky.Data[i].typ = usek) then
+    begin
+     for j := 0 to Self.TechBloky.Data[i].graph_blk.cnt-2 do
+      begin
+       if (TUsek(Self.TechBloky.Data[i].graph_blk.data[j]).cislo_koleje <>
+           TUsek(Self.TechBloky.Data[i].graph_blk.data[j+1]).cislo_koleje) then
+          Self.Errors.Add('ERROR: Relief technologicky usek '+IntToStr(Self.TechBloky.Data[i].id)+
+            ': ruzne cislo koleje v ruznych panelech!');
+      end;
+    end;
+
+   /////////////
    //kontrola totoznosti orientace navestidel
 
    if (Self.TechBloky.Data[i].typ = navestidlo) then
@@ -767,21 +777,22 @@ begin
      for j := 0 to Self.TechBloky.Data[i].graph_blk.cnt-2 do
       begin
        nav := (Self.TechBloky.Data[i].graph_blk.data[j] as TNavestidlo);
+       nav2 := (Self.TechBloky.Data[i].graph_blk.data[j+1] as TNavestidlo);
        case (nav.SymbolID) of
         0,4:begin
              case (nav.SymbolID) of
-              0,4:if ((Self.ORs.Data[nav.OblRizeni].Lichy xor 0) <> (Self.ORs.Data[nav.OblRizeni].Lichy xor 0)) then
-                    Self.Errors.Add('ERROR: Relief technologicke navestidlo '+IntToStr(Self.TechBloky.Data[i].id)+': navestidlo nema stejny smer ve stanicich '+Self.ORs.Data[nav.OblRizeni].Name+', '+Self.ORs.Data[nav.OblRizeni].Name);
-              1,5:if ((Self.ORs.Data[nav.OblRizeni].Lichy xor 0) <> (Self.ORs.Data[nav.OblRizeni].Lichy xor 1)) then
-                    Self.Errors.Add('ERROR: Relief technologicke navestidlo '+IntToStr(Self.TechBloky.Data[i].id)+': navestidlo nema stejny smer ve stanicich '+Self.ORs.Data[nav.OblRizeni].Name+', '+Self.ORs.Data[nav.OblRizeni].Name);
+              0,4:if ((Self.ORs.Data[nav.OblRizeni].Lichy xor 0) <> (Self.ORs.Data[nav2.OblRizeni].Lichy xor 0)) then
+                    Self.Errors.Add('ERROR: Relief technologicke navestidlo '+IntToStr(Self.TechBloky.Data[i].id)+': navestidlo nema stejny smer ve stanicich '+Self.ORs.Data[nav.OblRizeni].Name+', '+Self.ORs.Data[nav2.OblRizeni].Name);
+              1,5:if ((Self.ORs.Data[nav.OblRizeni].Lichy xor 0) <> (Self.ORs.Data[nav2.OblRizeni].Lichy xor 1)) then
+                    Self.Errors.Add('ERROR: Relief technologicke navestidlo '+IntToStr(Self.TechBloky.Data[i].id)+': navestidlo nema stejny smer ve stanicich '+Self.ORs.Data[nav.OblRizeni].Name+', '+Self.ORs.Data[nav2.OblRizeni].Name);
              end;//case j+1
          end;//case 0,4
         1,5:begin
              case (nav.SymbolID) of
-              0,4:if ((Self.ORs.Data[nav.OblRizeni].Lichy xor 1) <> (Self.ORs.Data[nav.OblRizeni].Lichy xor 0)) then
-                    Self.Errors.Add('ERROR: Relief technologicke navestidlo '+IntToStr(Self.TechBloky.Data[i].id)+': navestidlo nema stejny smer ve stanicich '+Self.ORs.Data[nav.OblRizeni].Name+', '+Self.ORs.Data[nav.OblRizeni].Name);
-              1,5:if ((Self.ORs.Data[nav.OblRizeni].Lichy xor 1) <> (Self.ORs.Data[nav.OblRizeni].Lichy xor 1)) then
-                    Self.Errors.Add('ERROR: Relief technologicke navestidlo '+IntToStr(Self.TechBloky.Data[i].id)+': navestidlo nema stejny smer ve stanicich '+Self.ORs.Data[nav.OblRizeni].Name+', '+Self.ORs.Data[nav.OblRizeni].Name);
+              0,4:if ((Self.ORs.Data[nav.OblRizeni].Lichy xor 1) <> (Self.ORs.Data[nav2.OblRizeni].Lichy xor 0)) then
+                    Self.Errors.Add('ERROR: Relief technologicke navestidlo '+IntToStr(Self.TechBloky.Data[i].id)+': navestidlo nema stejny smer ve stanicich '+Self.ORs.Data[nav.OblRizeni].Name+', '+Self.ORs.Data[nav2.OblRizeni].Name);
+              1,5:if ((Self.ORs.Data[nav.OblRizeni].Lichy xor 1) <> (Self.ORs.Data[nav2.OblRizeni].Lichy xor 1)) then
+                    Self.Errors.Add('ERROR: Relief technologicke navestidlo '+IntToStr(Self.TechBloky.Data[i].id)+': navestidlo nema stejny smer ve stanicich '+Self.ORs.Data[nav.OblRizeni].Name+', '+Self.ORs.Data[nav2.OblRizeni].Name);
              end;//case j+1
          end;//case 1,5
        end;//case i
@@ -846,10 +857,11 @@ begin
    //sestaveni OR
    str := str + Self.GetTechBlkOR(i) + ';';
 
-   if ((Self.TechBloky.Data[i].graph_blk.data[0] as TUsek).staniceni_kolej) then
-     str := str + '1;'
-   else
-     str := str + '0;';
+   if ((Self.TechBloky.Data[i].graph_blk.data[0] as TUsek).cislo_koleje <> '') then
+    begin
+     str := str + '1;' + TUsek(Self.TechBloky.Data[i].graph_blk.data[0]).cislo_koleje;
+    end else
+     str := str + '0';
 
    ini.WriteString('U', IntToStr(Self.TechBloky.Data[i].id), str);
   end;//for i
