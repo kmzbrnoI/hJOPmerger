@@ -452,7 +452,8 @@ begin
 
    (blk as TUsek).cislo_koleje := inifile.ReadString('U'+IntToStr(i),'N','');
 
-   Self.AddGraphBlk(blk, id, usek);
+   if (id > -1) then
+     Self.AddGraphBlk(blk, id, usek);
   end;//for i
 
  //navestidla
@@ -478,7 +479,8 @@ begin
    end;
    if ((blk as TNavestidlo).UsekPred = -1) then Self.Errors.Add('ERROR: '+ExtractFileName(filename)+' Relief navestidlo '+IntToStr(i)+': pred navestidlem neni zadny usek');
 
-   Self.AddGraphBlk(blk, id, navestidlo);
+   if (id > -1) then
+     Self.AddGraphBlk(blk, id, navestidlo);
   end;//for i
 
  //pomocne symboly nejsou potreba
@@ -504,7 +506,8 @@ begin
    blk.OblRizeni   := inifile.ReadInteger('V'+IntToStr(i),'OR',-1)+start_OR;
    if (blk.OblRizeni = start_OR-1) then Self.Errors.Add('ERROR: '+ExtractFileName(filename)+' Relief vyhybka '+IntToStr(i)+': neni navaznost na oblast rizeni');
 
-   Self.AddGraphBlk(blk, id, vyhybka);
+   if (id > -1) then
+     Self.AddGraphBlk(blk, id, vyhybka);
   end;
 
  //Prejezdy
@@ -534,7 +537,8 @@ begin
      (blk as TPrejezd).StaticPositions.Data[j].Y := StrToIntDef(copy(obj, j*6+4, 3), 0);
     end;//for j
 
-   Self.AddGraphBlk(blk, id, prejezd);
+   if (id > -1) then
+     Self.AddGraphBlk(blk, id, prejezd);
   end;//for i
 
  // popisky
@@ -552,7 +556,8 @@ begin
 
    if ((id = -1) and (Length((blk as TPopisek).Text) = 1)) then Self.Errors.Add('ERROR: '+ExtractFileName(filename)+' Relief popisek '+IntToStr(i)+': neni navaznost na technologicky blok');
 
-   Self.AddGraphBlk(blk, id, popisek);
+   if (id > -1) then
+     Self.AddGraphBlk(blk, id, popisek);
   end;//for i
 
  // uvazky
@@ -569,7 +574,8 @@ begin
 
    if (id = -1) then Self.Errors.Add('ERROR: '+ExtractFileName(filename)+' Relief uvazka '+IntToStr(i)+': neni navaznost na technologicky blok');
 
-   Self.AddGraphBlk(blk, id, uvazka);
+   if (id > -1) then
+     Self.AddGraphBlk(blk, id, uvazka);
   end;//for i
 
  // uvazky spr
@@ -585,7 +591,8 @@ begin
 
    if (id = -1) then Self.Errors.Add('ERROR: '+ExtractFileName(filename)+' Relief uvazka spr '+IntToStr(i)+': neni navaznost na technologicky blok');
 
-   Self.AddGraphBlk(blk, id, uvazka);
+   if (id > -1) then
+     Self.AddGraphBlk(blk, id, uvazka);
   end;//for i
 
  // zamky
@@ -601,7 +608,8 @@ begin
 
    if (id = -1) then Self.Errors.Add('ERROR: '+ExtractFileName(filename)+' Relief zamek '+IntToStr(i)+': neni navaznost na technologicky blok');
 
-   Self.AddGraphBlk(blk, id, zamek);
+   if (id > -1) then
+     Self.AddGraphBlk(blk, id, zamek);
   end;
 
  // rozpojovace
@@ -617,7 +625,8 @@ begin
 
    if (id = -1) then Self.Errors.Add('ERROR: '+ExtractFileName(filename)+' Relief rozpojovac '+IntToStr(i)+': neni navaznost na technologicky blok');
 
-   Self.AddGraphBlk(blk, id, rozp);
+   if (id > -1) then
+     Self.AddGraphBlk(blk, id, rozp);
   end;
 
 
