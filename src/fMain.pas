@@ -68,54 +68,52 @@ implementation
 uses Verze, fDataCheck;
 
 procedure TF_Main.A_CheckExecute(Sender: TObject);
-var return,i:Integer;
+var i:Integer;
     fnames:TStrings;
 begin
  fnames := TStringList.Create();
- fnames.Clear();
- for i := 0 to Self.LV_InputFiles.Items.Count-1 do fnames.Add(Self.LV_InputFiles.Items.Item[i].Caption);
+ try
+   for i := 0 to Self.LV_InputFiles.Items.Count-1 do
+     fnames.Add(Self.LV_InputFiles.Items.Item[i].Caption);
 
- //nacteni souboru
- return := Self.Relief.FilesLoad(fnames);
- fnames.Free();
+   try
+     Self.Relief.FilesLoad(fnames);
+   except
+     on E:Exception do
+      begin
+       Application.MessageBox(PChar('Chyba pøi naèítání souborù reliéfù:'+E.Message+#13#10+
+        'Opravte chyby v souboru panelu a naètìtì soubor znovu!'), 'Chyba', MB_OK OR MB_ICONERROR);
+       Exit();
+      end;
+   end;
+ finally
+  fnames.Free();
+ end;
 
- if (return <> 0) then
-  begin
-   Application.MessageBox(PChar('Chyba pøi naèítání souborù reliéfù: chyba '+IntToStr(return)+#13#10+'Opravte chyby v souboru panelu a naètìtì soubor znovu!'),'Chyba',MB_OK OR MB_ICONERROR);
-   Exit;
-  end;
-
- //spojeni dat
  Self.Relief.Merge();
-
- //kontrola dat
  fnames := Self.Relief.CheckValid();
  F_DataCheck.OpenForm(fnames);
-end;//procedure
+end;
 
 procedure TF_Main.A_ExportExecute(Sender: TObject);
-var return:Byte;
 begin
- return := Self.Relief.ExportData(Self.E_OutputFileName.Text);
-
- if (return = 0) then
-  begin
-   Application.MessageBox(PChar('Export probìhl úspìšnì'+#13#10+'Vytvoøen soubor '+Self.E_OutputFileName.Text),'Info',MB_OK OR MB_ICONINFORMATION);
-  end;
-
- if (return = 1) then
-  begin
-   Application.MessageBox(PChar('Export se nezdaøil !'+#13#10+'Výstupní soubor '+Self.E_OutputFileName.Text+' nelze zapsat'),'Varování',MB_OK OR MB_ICONWARNING);
-  end;
-
-end;//procedure
+ try
+   Self.Relief.ExportData(Self.E_OutputFileName.Text);
+   Application.MessageBox(PChar('Export probìhl úspìšnì'+#13#10+'Vytvoøen soubor '+Self.E_OutputFileName.Text),
+     'Info', MB_OK OR MB_ICONINFORMATION);
+ except
+   on E:Exception do
+     Application.MessageBox(PChar('Export se nezdaøil:'+#13#10+E.Message),
+       'Varování', MB_OK OR MB_ICONWARNING);
+ end;
+end;
 
 procedure TF_Main.A_FileCloseExecute(Sender: TObject);
 begin
  Self.LV_InputFiles.Items.Delete(Self.LV_InputFiles.ItemIndex);
  if (Self.LV_InputFiles.Items.Count = 0) then Self.A_Check.Enabled := false;
  Self.A_Export.Enabled := false;
-end;//procedure
+end;
 
 procedure TF_Main.B_OutputProchazetClick(Sender: TObject);
 begin
@@ -125,7 +123,7 @@ begin
    if (RightStr(Self.E_OutputFileName.Text,5) <> '.spnl') then Self.E_OutputFileName.Text := Self.E_OutputFileName.Text + '.spnl';
    Self.A_Export.Enabled := true;
   end;
-end;//procedure
+end;
 
 procedure TF_Main.FormCreate(Sender: TObject);
 begin
@@ -145,13 +143,13 @@ begin
    for i := 0 to Self.OD_OpenOpnl.Files.Count-1 do
      Self.AddFile(Self.OD_OpenOpnl.Files[i]);
   end;//if
-end;//procedure
+end;
 
 procedure TF_Main.LV_InputFilesChange(Sender: TObject; Item: TListItem;
   Change: TItemChange);
 begin
  if ((Sender as TListView).Selected <> nil) then Self.A_FileClose.Enabled := true else Self.A_FileClose.Enabled := false;
-end;//procedure
+end;
 
 procedure TF_Main.LV_InputFilesDblClick(Sender: TObject);
 begin
@@ -171,7 +169,7 @@ end;
 procedure TF_Main.MI_AppExitClick(Sender: TObject);
 begin
  Self.Close();
-end;//procedure
+end;
 
 procedure TF_Main.AddFile(filename:string);
 var LI:TListItem;
@@ -181,6 +179,6 @@ begin
 
  Self.A_Check.Enabled := true;
  if (Self.A_Export.Enabled) then Self.A_Export.Enabled := false;
-end;//procedure
+end;
 
 end.//unit
