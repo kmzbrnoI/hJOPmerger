@@ -435,11 +435,11 @@ begin
    // hledame duplicity v unikatnich nazvech v poli oblasti rizeni
    Self.FindSimilarORs(orig, new);
 
-   if (not Self.CheckSimilarORs(orig, new)) then
-     Self.Errors.Add('ERROR: oblasti øízení s id ' + Self.ORs[orig].id + ' se neshodují v názvu nebo ve zkratce názvu!');
-
    // pokud nenajdeme duplicitu, ukoncujeme merge
    if (orig = -1) then Exit;
+
+   if (not Self.CheckSimilarORs(orig, new)) then
+     Self.Errors.Add('ERROR: oblasti øízení s id ' + Self.ORs[orig].id + ' se neshodují v názvu nebo ve zkratce názvu!');
 
    // duplicita nalezena -> merge
    // zachovavame orig, new mazeme
@@ -449,7 +449,6 @@ begin
 
    // a hledame znova....
  end;
-
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -860,7 +859,7 @@ begin
   end;//for i
 end;
 
-// porovnavame svechny potrebne atributy a podle nich zjistujeme, jestli jsou OR opravdu totozne
+// porovnavame vsechny potrebne atributy a podle nich zjistujeme, jestli jsou OR opravdu totozne
 // pokud narazime na zmeny, pridame je do logu (Self.Errors)
 function TRelief.CheckSimilarORs(or1:Integer; or2:Integer):Boolean;
 begin
