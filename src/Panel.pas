@@ -13,8 +13,6 @@ uses
   Forms, OblastRizeni, Generics.Collections, StrUtils, Bloky;
 
 const
- _MAX_SYMBOLS  = 256;
-
   _FileVersion_accept : array[0..1] of string = (
      '1.1', '1.2'
   );
@@ -26,13 +24,10 @@ type
 TTechBlok = class
   typ:TBlkType;
   id:Integer;
-
-  graph_blk:record
-    data:array [0.._MAX_TECH_REL-1] of TGraphBlok;
-    cnt:Integer;
-  end;
+  graph_blk:TObjectList<TGraphBlok>;
 
   constructor Create(typ:TBlkType);
+  destructor Destroy(); override;
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -40,11 +35,7 @@ end;
 TRelief = class
   private
    // technologicke bloky
-   TechBloky:record
-    Data:array of TTechBlok;
-    Count:Integer;
-   end;
-
+   TechBloky:TList<TTechBlok>;
    ORs:TORs;                    //oblasti rizeni
    Errors:TStrings;             //sem se ulozi chyby pri nacitani a vrati se pri CheckValid()
 
@@ -55,7 +46,7 @@ TRelief = class
     function GetUsekPredID(UsekPos:TPoint; oblRizeni:Integer):Integer;  //porovnava pouze v dane oblasti rizeni
     // !!!   musi byt spusteno pred merge oblasti rizeni !!!
 
-    function GetTechBlkOR(index:Integer):string;
+    function GetTechBlkOR(tblk:TTechBlok):string;
 
     procedure AddGraphBlk(data:TGraphBlok; id:Integer; typ:TBlkType);
 
@@ -94,9 +85,11 @@ implementation
 //vytvoreni objektu
 constructor TRelief.Create();
 begin
- inherited Create();
+ inherited;
+
  Self.Errors := TStringList.Create();
-end;//constructor
+ Self.TechBloky := TList<TTechBlok>.Create();
+end;
 
 destructor TRelief.Destroy;
 var i:Integer;
@@ -105,25 +98,17 @@ begin
    Self.ORs.Data[i].Osvetleni.Free();
 
  Self.Reset();
+ Self.TechBloky.Free();
  FreeAndNil(Self.Errors);
 
- inherited Destroy();
-end;//destructor
+ inherited;
+end;
 
 //resetuje pocty
 procedure TRelief.Reset();
-var i, j:Integer;
 begin
- for i := 0 to Self.TechBloky.Count-1 do
-  begin
-   for j := 0 to Self.TechBloky.Data[i].graph_blk.cnt-1 do
-    FreeAndNil(Self.TechBloky.Data[i].graph_blk.data[j]);
-   FreeAndNil(Self.TechBloky.Data[i]);
-  end;//for i
-
- Self.ORs.Cnt         := 0;
- Self.TechBloky.Count := 0;
-
+ Self.TechBloky.Clear();
+ Self.ORs.Cnt := 0;
  Self.Errors.Clear();
 end;//procedure
 
@@ -162,6 +147,7 @@ var i,j,return,id:Integer;
     cnt:Integer;
     versionOk:boolean;
     sym:TReliefSym;
+    bp:TBlikPoint;
 begin
  //kontrola existence
  if (not FileExists(filename)) then
@@ -325,20 +311,24 @@ begin
    blk.OblRizeni   := inifile.ReadInteger('PRJ'+IntToStr(i), 'OR', -1)+start_OR;
 
    obj := inifile.ReadString('PRJ'+IntToStr(i), 'BP', '');
-   (blk as TPrejezd).BlikPositions.Count := (Length(obj) div 9);
-   for j := 0 to (blk as TPrejezd).BlikPositions.Count-1 do
+   (blk as TPrejezd).BlikPositions.Clear();
+   for j := 0 to (Length(obj) div 9)-1 do
     begin
-     (blk as TPrejezd).BlikPositions.Data[j].Pos.X := StrToIntDef(copy(obj, j*9+1, 3), 0);
-     (blk as TPrejezd).BlikPositions.Data[j].Pos.Y := StrToIntDef(copy(obj, j*9+4, 3), 0);
-     (blk as TPrejezd).BlikPositions.Data[j].TechUsek := StrToIntDef(copy(obj, j*9+7, 3), 0);
+     bp.Pos.X := StrToIntDef(copy(obj, j*9+1, 3), 0);
+     bp.Pos.Y := StrToIntDef(copy(obj, j*9+4, 3), 0);
+     bp.TechUsek := StrToIntDef(copy(obj, j*9+7, 3), 0);
+
+     (blk as TPrejezd).BlikPositions.Add(bp);
     end;//for j
 
    obj := inifile.ReadString('PRJ'+IntToStr(i), 'SP', '');
    (blk as TPrejezd).StaticPositions.Count := (Length(obj) div 6);
    for j := 0 to (blk as TPrejezd).StaticPositions.Count-1 do
     begin
-     (blk as TPrejezd).StaticPositions.Data[j].X := StrToIntDef(copy(obj, j*6+1, 3), 0);
-     (blk as TPrejezd).StaticPositions.Data[j].Y := StrToIntDef(copy(obj, j*6+4, 3), 0);
+     (blk as TPrejezd).StaticPositions.Add(Point(
+       StrToIntDef(copy(obj, j*6+1, 3), 0),
+       StrToIntDef(copy(obj, j*6+4, 3), 0)
+     ))
     end;//for j
 
    if (id > -1) then
@@ -569,32 +559,32 @@ end;//procedure
 //checking data valid
 function TRelief.CheckValid():TStrings;
 var str:string;
-    i,j:Integer;
+    j:Integer;
     nav, nav2:TNavestidlo;
     vyh:TVyhybka;
+    blk:TGraphBlok;
+    tblk:TTechBlok;
 begin
  Self.Errors.Add('--- Spustena 2. faze validace: validator objektovych navaznosti ---');
  DateTimeToString(str,'yyyy-mm-dd hh:nn:ss',Now);
  Self.Errors.Add(str);
 
  //kontrola prirazeni oblasti rizeni
- for i := 0 to Self.TechBloky.Count-1 do
+ for tblk in Self.TechBloky do
   begin
-   for j := 0 to Self.TechBloky.Data[i].graph_blk.cnt-1 do
-    begin
-     if (Self.TechBloky.Data[i].graph_blk.data[j].OblRizeni >= Self.ORs.Cnt) then
-      Self.Errors.Add('ERROR: Relief blok id '+IntToStr(Self.TechBloky.Data[i].id)+': definovana oblast rizeni, ktera neni v seznamu OR');
-    end;//for j
+   for blk in tblk.graph_blk do
+     if (blk.OblRizeni >= Self.ORs.Cnt) then
+       Self.Errors.Add('ERROR: Relief blok id '+IntToStr(tblk.id)+': definovana oblast rizeni, ktera neni v seznamu OR');
 
    /////////////
    //kontrola stejneho cisla koleje
-   if (Self.TechBloky.Data[i].typ = usek) then
+   if (tblk.typ = usek) then
     begin
-     for j := 0 to Self.TechBloky.Data[i].graph_blk.cnt-2 do
+     for j := 0 to tblk.graph_blk.Count-2 do
       begin
-       if (TUsek(Self.TechBloky.Data[i].graph_blk.data[j]).cislo_koleje <>
-           TUsek(Self.TechBloky.Data[i].graph_blk.data[j+1]).cislo_koleje) then
-          Self.Errors.Add('ERROR: Relief technologicky usek '+IntToStr(Self.TechBloky.Data[i].id)+
+       if (TUsek(tblk.graph_blk[j]).cislo_koleje <>
+           TUsek(tblk.graph_blk[j+1]).cislo_koleje) then
+          Self.Errors.Add('ERROR: Relief technologicky usek '+IntToStr(tblk.id)+
             ': ruzne cislo koleje v ruznych panelech!');
       end;
     end;
@@ -602,29 +592,29 @@ begin
    /////////////
    //kontrola totoznosti orientace navestidel
 
-   if (Self.TechBloky.Data[i].typ = navestidlo) then
+   if (tblk.typ = navestidlo) then
     begin
 
      // navestidlo
-     for j := 0 to Self.TechBloky.Data[i].graph_blk.cnt-2 do
+     for j := 0 to tblk.graph_blk.Count-2 do
       begin
-       nav := (Self.TechBloky.Data[i].graph_blk.data[j] as TNavestidlo);
-       nav2 := (Self.TechBloky.Data[i].graph_blk.data[j+1] as TNavestidlo);
+       nav := (tblk.graph_blk[j] as TNavestidlo);
+       nav2 := (tblk.graph_blk[j+1] as TNavestidlo);
        case (nav.SymbolID) of
         0,4:begin
              case (nav.SymbolID) of
               0,4:if ((Self.ORs.Data[nav.OblRizeni].Lichy xor 0) <> (Self.ORs.Data[nav2.OblRizeni].Lichy xor 0)) then
-                    Self.Errors.Add('ERROR: Relief technologicke navestidlo '+IntToStr(Self.TechBloky.Data[i].id)+': navestidlo nema stejny smer ve stanicich '+Self.ORs.Data[nav.OblRizeni].Name+', '+Self.ORs.Data[nav2.OblRizeni].Name);
+                    Self.Errors.Add('ERROR: Relief technologicke navestidlo '+IntToStr(tblk.id)+': navestidlo nema stejny smer ve stanicich '+Self.ORs.Data[nav.OblRizeni].Name+', '+Self.ORs.Data[nav2.OblRizeni].Name);
               1,5:if ((Self.ORs.Data[nav.OblRizeni].Lichy xor 0) <> (Self.ORs.Data[nav2.OblRizeni].Lichy xor 1)) then
-                    Self.Errors.Add('ERROR: Relief technologicke navestidlo '+IntToStr(Self.TechBloky.Data[i].id)+': navestidlo nema stejny smer ve stanicich '+Self.ORs.Data[nav.OblRizeni].Name+', '+Self.ORs.Data[nav2.OblRizeni].Name);
+                    Self.Errors.Add('ERROR: Relief technologicke navestidlo '+IntToStr(tblk.id)+': navestidlo nema stejny smer ve stanicich '+Self.ORs.Data[nav.OblRizeni].Name+', '+Self.ORs.Data[nav2.OblRizeni].Name);
              end;//case j+1
          end;//case 0,4
         1,5:begin
              case (nav.SymbolID) of
               0,4:if ((Self.ORs.Data[nav.OblRizeni].Lichy xor 1) <> (Self.ORs.Data[nav2.OblRizeni].Lichy xor 0)) then
-                    Self.Errors.Add('ERROR: Relief technologicke navestidlo '+IntToStr(Self.TechBloky.Data[i].id)+': navestidlo nema stejny smer ve stanicich '+Self.ORs.Data[nav.OblRizeni].Name+', '+Self.ORs.Data[nav2.OblRizeni].Name);
+                    Self.Errors.Add('ERROR: Relief technologicke navestidlo '+IntToStr(tblk.id)+': navestidlo nema stejny smer ve stanicich '+Self.ORs.Data[nav.OblRizeni].Name+', '+Self.ORs.Data[nav2.OblRizeni].Name);
               1,5:if ((Self.ORs.Data[nav.OblRizeni].Lichy xor 1) <> (Self.ORs.Data[nav2.OblRizeni].Lichy xor 1)) then
-                    Self.Errors.Add('ERROR: Relief technologicke navestidlo '+IntToStr(Self.TechBloky.Data[i].id)+': navestidlo nema stejny smer ve stanicich '+Self.ORs.Data[nav.OblRizeni].Name+', '+Self.ORs.Data[nav2.OblRizeni].Name);
+                    Self.Errors.Add('ERROR: Relief technologicke navestidlo '+IntToStr(tblk.id)+': navestidlo nema stejny smer ve stanicich '+Self.ORs.Data[nav.OblRizeni].Name+', '+Self.ORs.Data[nav2.OblRizeni].Name);
              end;//case j+1
          end;//case 1,5
        end;//case i
@@ -635,13 +625,13 @@ begin
    /////////////
    //kontrola totoznosti navaznosti vyhybek
 
-   if (Self.TechBloky.Data[i].typ = vyhybka) then
+   if (tblk.typ = vyhybka) then
     begin
-     for j := 0 to Self.TechBloky.Data[i].graph_blk.cnt-2 do
+     for j := 0 to tblk.graph_blk.Count-2 do
       begin
-       vyh := (Self.TechBloky.Data[i].graph_blk.data[j] as TVyhybka);
+       vyh := (tblk.graph_blk[j] as TVyhybka);
        if (vyh.obj <> vyh.obj) then
-        Self.Errors.Add('ERROR: Relief vyhybka '+IntToStr(i)+': vyhybka ma navaznost na jiny blok ve stanicich '+Self.ORs.Data[vyh.OblRizeni].Name+', '+Self.ORs.Data[vyh.OblRizeni].Name);
+         Self.Errors.Add('ERROR: Relief technologicka vyhybka '+IntToStr(tblk.id)+': vyhybka ma navaznost na jiny blok ve stanicich '+Self.ORs.Data[vyh.OblRizeni].Name+', '+Self.ORs.Data[vyh.OblRizeni].Name);
       end;//for j
 
     end;//vyhybka
@@ -657,6 +647,7 @@ function TRelief.ExportData(const filename:string):Byte;
 var ini:TMemIniFile;
     i,j:Integer;
     str:string;
+    tblk:TTechBlok;
 begin
  DeleteFile(filename);
 
@@ -680,145 +671,145 @@ begin
   end;
 
  //ulozit useky
- for i := 0 to Self.TechBloky.Count-1 do
+ for tblk in Self.TechBloky do
   begin
-   if (Self.TechBloky.Data[i].typ <> usek) then continue;
+   if (tblk.typ <> usek) then continue;
 
    str := '';
 
    //sestaveni OR
-   str := str + Self.GetTechBlkOR(i) + ';';
+   str := str + Self.GetTechBlkOR(tblk) + ';';
 
-   if ((Self.TechBloky.Data[i].graph_blk.data[0] as TUsek).cislo_koleje <> '') then
+   if ((tblk.graph_blk[0] as TUsek).cislo_koleje <> '') then
     begin
-     str := str + '1;' + TUsek(Self.TechBloky.Data[i].graph_blk.data[0]).cislo_koleje;
+     str := str + '1;' + TUsek(tblk.graph_blk[0]).cislo_koleje;
     end else
      str := str + '0';
 
-   ini.WriteString('U', IntToStr(Self.TechBloky.Data[i].id), str);
+   ini.WriteString('U', IntToStr(tblk.id), str);
   end;//for i
 
  //ulozit navestidla
- for i := 0 to Self.TechBloky.Count-1 do
+ for tblk in Self.TechBloky do
   begin
-   if (Self.TechBloky.Data[i].typ <> navestidlo) then continue;
+   if (tblk.typ <> navestidlo) then continue;
 
    str := '';
 
    //sestaveni OR
-   str := str + Self.GetTechBlkOR(i) + ';';
+   str := str + Self.GetTechBlkOR(tblk) + ';';
 
    //typ symbolu
-   case ((Self.TechBloky.Data[i].graph_blk.data[0] as TNavestidlo).SymbolID) of
+   case ((tblk.graph_blk[0] as TNavestidlo).SymbolID) of
     0,1:str := str + '0;';
     //2,3 jsou AB
     4,5:str := str + '1;';
    end;//case
 
-  case (Self.ORs.Data[Self.TechBloky.Data[i].graph_blk.data[0].OblRizeni].Lichy xor ((Self.TechBloky.Data[i].graph_blk.data[0] as TNavestidlo).SymbolID mod 2)) of
+  case (Self.ORs.Data[tblk.graph_blk[0].OblRizeni].Lichy xor ((tblk.graph_blk[0] as TNavestidlo).SymbolID mod 2)) of
    0:str := str + '0;';
    1:str := str + '1;';
   end;
 
    //usek pred id
-   str := str + IntToStr((Self.TechBloky.Data[i].graph_blk.data[0] as TNavestidlo).UsekPred);
+   str := str + IntToStr((tblk.graph_blk[0] as TNavestidlo).UsekPred);
 
-   ini.WriteString('N',IntToStr(Self.TechBloky.Data[i].id), str);
+   ini.WriteString('N',IntToStr(tblk.id), str);
   end;//for i
 
  //ulozit vyhybky
- for i := 0 to Self.TechBloky.Count-1 do
+ for tblk in Self.TechBloky do
   begin
-   if (Self.TechBloky.Data[i].typ <> vyhybka) then continue;
+   if (tblk.typ <> vyhybka) then continue;
 
    str := '';
 
    //sestaveni OR
-   str := str + Self.GetTechBlkOR(i) + ';';
+   str := str + Self.GetTechBlkOR(tblk) + ';';
 
    //navaznost na usek
-   str := str + IntToStr((Self.TechBloky.Data[i].graph_blk.data[0] as TVyhybka).obj)+';';
+   str := str + IntToStr((tblk.graph_blk[0] as TVyhybka).obj)+';';
 
-   ini.WriteString('V',IntToStr(Self.TechBloky.Data[i].id),str);
+   ini.WriteString('V',IntToStr(tblk.id),str);
   end;//for i
 
  //ulozit prejezdy
- for i := 0 to Self.TechBloky.Count-1 do
+ for tblk in Self.TechBloky do
   begin
-   if (Self.TechBloky.Data[i].typ <> prejezd) then continue;
+   if (tblk.typ <> prejezd) then continue;
 
    str := '';
 
    //sestaveni OR
-   str := str + Self.GetTechBlkOR(i) + ';';
+   str := str + Self.GetTechBlkOR(tblk) + ';';
 
-   ini.WriteString('PRJ', IntToStr(Self.TechBloky.Data[i].id), str);
+   ini.WriteString('PRJ', IntToStr(tblk.id), str);
   end;//for i
 
  //ulozit popisky
- for i := 0 to Self.TechBloky.Count-1 do
+ for tblk in Self.TechBloky do
   begin
-   if (Self.TechBloky.Data[i].typ <> popisek) then continue;
+   if (tblk.typ <> popisek) then continue;
 
-   if (Length((Self.TechBloky.Data[i].graph_blk.data[0] as TPopisek).Text) <> 1) then continue;
+   if (Length((tblk.graph_blk[0] as TPopisek).Text) <> 1) then continue;
 
    str := '';
 
    //sestaveni OR
-   str := str + Self.GetTechBlkOR(i) + ';';
+   str := str + Self.GetTechBlkOR(tblk) + ';';
 
-   ini.WriteString('T', IntToStr(Self.TechBloky.Data[i].id), str);
+   ini.WriteString('T', IntToStr(tblk.id), str);
   end;//for i
 
  //ulozit uvazky
- for i := 0 to Self.TechBloky.Count-1 do
+ for tblk in Self.TechBloky do
   begin
-   if (Self.TechBloky.Data[i].typ <> uvazka) then continue;
+   if (tblk.typ <> uvazka) then continue;
 
    //sestaveni OR
    str := '';
-   str := str + Self.GetTechBlkOR(i) + ';';
+   str := str + Self.GetTechBlkOR(tblk) + ';';
 
-   ini.WriteString('Uv', IntToStr(Self.TechBloky.Data[i].id), str);
+   ini.WriteString('Uv', IntToStr(tblk.id), str);
   end;//for i
 
  //ulozit zamky
- for i := 0 to Self.TechBloky.Count-1 do
+ for tblk in Self.TechBloky do
   begin
-   if (Self.TechBloky.Data[i].typ <> zamek) then continue;
+   if (tblk.typ <> zamek) then continue;
 
    //sestaveni OR
    str := '';
-   str := str + Self.GetTechBlkOR(i) + ';';
+   str := str + Self.GetTechBlkOR(tblk) + ';';
 
-   ini.WriteString('Z', IntToStr(Self.TechBloky.Data[i].id), str);
+   ini.WriteString('Z', IntToStr(tblk.id), str);
   end;//for i
 
  //ulozit vykolejky
- for i := 0 to Self.TechBloky.Count-1 do
+ for tblk in Self.TechBloky do
   begin
-   if (Self.TechBloky.Data[i].typ <> vykolejka) then continue;
+   if (tblk.typ <> vykolejka) then continue;
 
    //sestaveni OR
    str := '';
-   str := str + Self.GetTechBlkOR(i) + ';';
+   str := str + Self.GetTechBlkOR(tblk) + ';';
 
    //navaznost na usek
-   str := str + IntToStr((Self.TechBloky.Data[i].graph_blk.data[0] as TVykolejka).usek)+';';
+   str := str + IntToStr((tblk.graph_blk[0] as TVykolejka).usek)+';';
 
-   ini.WriteString('V', IntToStr(Self.TechBloky.Data[i].id), str); // ulozit jako vyhybky
+   ini.WriteString('V', IntToStr(tblk.id), str); // ulozit jako vyhybky
   end;//for i
 
  //ulozit rozpojovace
- for i := 0 to Self.TechBloky.Count-1 do
+ for tblk in Self.TechBloky do
   begin
-   if (Self.TechBloky.Data[i].typ <> rozp) then continue;
+   if (tblk.typ <> rozp) then continue;
 
    //sestaveni OR
    str := '';
-   str := str + Self.GetTechBlkOR(i) + ';';
+   str := str + Self.GetTechBlkOR(tblk) + ';';
 
-   ini.WriteString('R', IntToStr(Self.TechBloky.Data[i].id), str);
+   ini.WriteString('R', IntToStr(tblk.id), str);
   end;//for i
 
  ini.UpdateFile();
@@ -832,23 +823,25 @@ end;//procedure
 // vraci technologicke ID bloku, ktery je na pozici UsekPos a v OR oblRizeni
 // vyuzivano pri ziskavani bloku pred navestidly
 function TRelief.GetUsekPredID(UsekPos:TPoint; oblRizeni:Integer):Integer;
-var i,j,k:Integer;
+var blk:TGraphBlok;
+    sym:TReliefSym;
+    tblk:TTechBlok;
 begin
  // prijdeme vsechny technologicke useky
- for i := 0 to Self.TechBloky.Count-1 do
+ for tblk in Self.TechBloky do
   begin
-   if (Self.TechBloky.Data[i].typ <> usek) then continue;
+   if (tblk.typ <> usek) then continue;
    
    // projdeme vsechny useky na reliefu daneho tech. useku
-   for j := 0 to Self.TechBloky.Data[i].graph_blk.cnt-1 do
+   for blk in tblk.graph_blk do
     begin
-     if (Self.TechBloky.Data[i].graph_blk.data[j].OblRizeni = oblRizeni) then
+     if (blk.OblRizeni = oblRizeni) then
       begin
        // tady mame jisto, ze jsme ve spravne oblasti rizeni
        // prohleddame vsechny symboly bloku
-       for k := 0 to (Self.TechBloky.Data[i].graph_blk.data[j] as TUsek).Symbols.Count-1 do
-         if ((UsekPos.X = (Self.TechBloky.Data[i].graph_blk.data[j] as TUsek).Symbols[k].Position.X) and (UsekPos.Y = (Self.TechBloky.Data[i].graph_blk.data[j] as TUsek).Symbols[k].Position.Y)) then
-           Exit(Self.TechBloky.Data[i].id);
+       for sym in (blk as TUsek).Symbols do
+         if ((UsekPos.X = sym.Position.X) and (UsekPos.Y = sym.Position.Y)) then
+           Exit(tblk.id);
       end;//if oblRizeni
     end;//for j
   end;//for i
@@ -858,25 +851,25 @@ end;//function
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function TRelief.GetTechBlkOR(index:Integer):string;
+function TRelief.GetTechBlkOR(tblk:TTechBlok):string;
 var i,j:Integer;
     ret:array [0.._MAX_OR-1] of Integer;
     retcnt:Integer;
     found:boolean;
+    blk:TGraphBlok;
 begin
  Result := '';
- if (index < 0) or (index >= Self.TechBloky.Count) then Exit;
 
  retcnt := 0;
- for i := 0 to Self.TechBloky.Data[index].graph_blk.cnt-1 do
+ for blk in tblk.graph_blk do
   begin
    found := false;
-   for j := 0 to retcnt-1 do if (ret[j] = Self.TechBloky.Data[index].graph_blk.data[i].OblRizeni) then found := true;
+   for j := 0 to retcnt-1 do if (ret[j] = blk.OblRizeni) then found := true;
 
    if (not found) then
     begin
      retcnt := retcnt + 1;
-     ret[retcnt-1] := Self.TechBloky.Data[index].graph_blk.data[i].OblRizeni;
+     ret[retcnt-1] := blk.OblRizeni;
     end;
   end;//for i
 
@@ -892,7 +885,7 @@ begin
  index := Self.TechBloky.Count;
  for i := 0 to Self.TechBloky.Count-1 do
   begin
-   if ((Self.TechBloky.Data[i].id = id) and (typ = Self.TechBloky.Data[i].typ)) then
+   if ((Self.TechBloky[i].id = id) and (typ = Self.TechBloky[i].typ)) then
     begin
      index := i;
      Break;
@@ -900,22 +893,10 @@ begin
   end;
 
  if (index = Self.TechBloky.Count) then
-  begin
-   // pridavame novy technologicky blok
-   Self.TechBloky.Count := Self.TechBloky.Count + 1;
-   if (Length(Self.TechBloky.Data) < Self.TechBloky.Count) then
-     SetLength(Self.TechBloky.Data, Length(Self.TechBloky.Data)+256);
+   Self.TechBloky.Add(TTechBlok.Create(typ));
 
-   Self.TechBloky.Data[index] := TTechBlok.Create(typ);
-   Self.TechBloky.Data[index].graph_blk.cnt     := 1;
-   Self.TechBloky.Data[index].graph_blk.data[0] := data;
-  end else begin
-   // pridavame graficky blok do existujicicho tech. bloku (pripad, kdy se nectou uplne stejne bloky z vice panelu)
-   Self.TechBloky.Data[index].graph_blk.cnt := Self.TechBloky.Data[index].graph_blk.cnt + 1;
-   Self.TechBloky.Data[index].graph_blk.data[Self.TechBloky.Data[index].graph_blk.cnt-1] := data;
-  end;
-
- Self.TechBloky.Data[index].id  := id;
+ Self.TechBloky[index].graph_blk.Add(data);
+ Self.TechBloky[index].id  := id;
 end;//procedure
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -926,9 +907,9 @@ procedure TRelief.ReplaceBlkOR(orig_or:Integer; new_or:Integer);
 var i, j:Integer;
 begin
  for i := 0 to Self.TechBloky.Count-1 do
-   for j := 0 to Self.TechBloky.Data[i].graph_blk.cnt-1 do
-    if (Self.TechBloky.Data[i].graph_blk.data[j].OblRizeni = orig_or) then
-      Self.TechBloky.Data[i].graph_blk.data[j].OblRizeni := new_or;
+   for j := 0 to Self.TechBloky[i].graph_blk.Count-1 do
+     if (Self.TechBloky[i].graph_blk[j].OblRizeni = orig_or) then
+       Self.TechBloky[i].graph_blk[j].OblRizeni := new_or;
 end;//procedure
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -944,17 +925,25 @@ begin
 
  // vsem blokum, ktere mely OR tuto a vesti musime dekrementovat OR
  for i := 0 to Self.TechBloky.Count-1 do
-   for j := 0 to Self.TechBloky.Data[i].graph_blk.cnt-1 do
-    if (Self.TechBloky.Data[i].graph_blk.data[j].OblRizeni >= index) then
-      Self.TechBloky.Data[i].graph_blk.data[j].OblRizeni := Self.TechBloky.Data[i].graph_blk.data[j].OblRizeni-1;
+   for j := 0 to Self.TechBloky[i].graph_blk.Count-1 do
+     if (Self.TechBloky[i].graph_blk[j].OblRizeni >= index) then
+       Self.TechBloky[i].graph_blk[j].OblRizeni := Self.TechBloky[i].graph_blk[j].OblRizeni-1;
 end;//procedure
 
 ////////////////////////////////////////////////////////////////////////////////
 
 constructor TTechBlok.Create(typ:TBlkType);
 begin
+ inherited Create();
  Self.typ := typ;
-end;//procedure
+ Self.graph_blk := TObjectList<TGraphBlok>.Create();
+end;
+
+destructor TTechBlok.Destroy();
+begin
+ Self.graph_blk.Free();
+ inherited;
+end;
 
 ////////////////////////////////////////////////////////////////////////////////
 

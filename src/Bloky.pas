@@ -4,10 +4,6 @@ interface
 
 uses Types, Generics.Collections;
 
-const
- _MAX_TECH_REL = 256;
- _MAX_PRJ_LEN  = 10;
-
 type
 
 TBlkType = (usek, navestidlo, vyhybka, prejezd, popisek, uvazka, uvazka_spr, zamek, vykolejka, rozp);
@@ -55,18 +51,12 @@ end;
 
 TPrejezd = class(TGraphBlok)
   Blok:Integer;
-
-  StaticPositions: record
-   data:array [0.._MAX_PRJ_LEN] of TPoint;
-   Count:Byte;
-  end;
-
-  BlikPositions: record
-   data:array [0.._MAX_PRJ_LEN] of TBlikPoint;
-   Count:Byte;
-  end;
-
+  StaticPositions: TList<TPoint>;
+  BlikPositions: TList<TBlikPoint>;
   OblRizeni:Integer;
+
+  constructor Create();
+  destructor Destroy(); override;
 end;
 
 TPopisek = class(TGraphBlok)
@@ -118,6 +108,22 @@ end;
 destructor TUsek.Destroy();
 begin
  Self.Symbols.Free();
+ inherited;
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+
+constructor TPrejezd.Create();
+begin
+ inherited;
+ Self.StaticPositions := TList<TPoint>.Create();
+ Self.BlikPositions := TList<TBlikPoint>.Create();
+end;
+
+destructor TPrejezd.Destroy();
+begin
+ Self.StaticPositions.Free();
+ Self.BlikPositions.Free();
  inherited;
 end;
 
