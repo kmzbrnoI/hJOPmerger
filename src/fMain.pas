@@ -81,7 +81,7 @@ begin
    except
      on E:Exception do
       begin
-       Application.MessageBox(PChar('Chyba pøi naèítání souborù reliéfù:'+E.Message+#13#10+
+       Application.MessageBox(PChar('Chyba pøi naèítání souborù reliéfù:'+#13#10+E.Message+#13#10+
         'Opravte chyby v souboru panelu a naètìtì soubor znovu!'), 'Chyba', MB_OK OR MB_ICONERROR);
        Exit();
       end;
@@ -90,9 +90,26 @@ begin
   fnames.Free();
  end;
 
- Self.Relief.Merge();
- fnames := Self.Relief.CheckValid();
- F_DataCheck.OpenForm(fnames);
+ try
+   Self.Relief.Merge();
+ except
+   on E:Exception do
+    begin
+     Application.MessageBox(PChar('Chyba pøi spojování souborù reliéfù:'+#13#10+E.Message), 'Chyba', MB_OK OR MB_ICONERROR);
+     Exit();
+    end;
+ end;
+
+ try
+   fnames := Self.Relief.CheckValid();
+   F_DataCheck.OpenForm(fnames);
+ except
+   on E:Exception do
+    begin
+     Application.MessageBox(PChar('Chyba pøi kontrole validity souborù reliéfù:'+#13#10+E.Message), 'Chyba', MB_OK OR MB_ICONERROR);
+     Exit();
+    end;
+ end;
 end;
 
 procedure TF_Main.A_ExportExecute(Sender: TObject);
