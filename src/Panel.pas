@@ -10,118 +10,16 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Controls, IniFiles,
-  Forms, OblastRizeni, Generics.Collections, StrUtils;
+  Forms, OblastRizeni, Generics.Collections, StrUtils, Bloky;
 
 const
  _MAX_SYMBOLS  = 256;
- _MAX_TECH_REL = 256;
- _MAX_PRJ_LEN  = 10;
 
   _FileVersion_accept : array[0..1] of string = (
      '1.1', '1.2'
   );
 
 type
-
-////////////////////////////////////////////////////////////////////////////////
-
-TBlkType = (usek, navestidlo, vyhybka, prejezd, popisek, uvazka, uvazka_spr, zamek, vykolejka, rozp);
-
-// abstraktni trida, ze ktere dedi graficke bloky
-TGraphBlok = class
-  OblRizeni:Integer;
-end;
-
-TVyhybka = class(TGraphBlok)
-  PolohaPlus:Byte;
-  Position:TPoint;
-  SymbolID:Integer;
-  obj:integer;                 // technologicke id useku, na kterem vyhybka je
-end;
-
-TReliefSym=record
-  Position:TPoint;
-  SymbolID:Integer;
-end;
-
-TUsek = class(TGraphBlok)
- Symbols:record
-   Data:array[0.._MAX_SYMBOLS] of TReliefSym;
-   Count:Byte;
-  end;//Symbols
-  cislo_koleje:string;
-  // zbytek neni potreba
-end;
-
-// graficky blok navestidlo
-TNavestidlo = class(TGraphBlok)
-  Blok:Integer;
-  Position:TPoint;
-  SymbolID:Integer;
-  OblRizeni:Integer;
-
-  UsekPred:Integer;    //technologicky usek
-end;//Navestidlo
-
-TBlikPoint = record
-  Pos:TPoint;
-  TechUsek:Integer;     // jaky technologicky usek ma tato cast prejezdu
-end;
-
-TPrejezd = class(TGraphBlok)
-  Blok:Integer;
-
-  StaticPositions: record
-   data:array [0.._MAX_PRJ_LEN] of TPoint;
-   Count:Byte;
-  end;
-
-  BlikPositions: record
-   data:array [0.._MAX_PRJ_LEN] of TBlikPoint;
-   Count:Byte;
-  end;
-
-  OblRizeni:Integer;
-end;//Navestidlo
-
-TPopisek = class(TGraphBlok)
-  Text:string;
-  Position:TPoint;
-  Color:Integer;
-end;
-
-TUvazka = class(TGraphBlok)
-  Pos:TPoint;
-  defalt_dir:Integer;
-  OblRizeni:Integer;
-end;
-
-TUvazkaSprVertDir = (top = 0, bottom = 1);
-
-TUvazkaSpr = class(TGraphBlok)
-  Pos:TPoint;
-  vertical_dir:TUvazkaSprVertDir;
-  spr_cnt:Integer;
-  OblRizeni:Integer;
-end;
-
-TZamek = class(TGraphBlok)
-  Pos:TPoint;
-end;
-
-TVykolejka = class(TGraphBlok)
-  Blok:Integer;
-  Pos:TPoint;
-  symbol:Integer;
-  usek:integer;              // index useku, na kterem je vykolejka
-  vetev:integer;             // cislo vetve, ve kterem je vykolejka
-end;
-
-TRozp = class(TGraphBlok)
-  Pos:TPoint;
-end;
-
-////////////////////////////////////////////////////////////////////////////////
 
 // technologicky blok
 // obsahuje reference na graficke bloky
@@ -263,6 +161,7 @@ var i,j,return,id:Integer;
     blk:TGraphBlok;
     cnt:Integer;
     versionOk:boolean;
+    sym:TReliefSym;
 begin
  //kontrola existence
  if (not FileExists(filename)) then
@@ -341,16 +240,17 @@ begin
 
 
    //Symbols
-   obj := inifile.ReadString('U'+IntToStr(i),'S','');
-   (blk as TUsek).Symbols.Count := (Length(obj) div 8);
-   for j := 0 to (blk as TUsek).Symbols.Count - 1 do
+   obj := inifile.ReadString('U'+IntToStr(i), 'S', '');
+   (blk as TUsek).Symbols.Clear();
+   for j := 0 to (Length(obj) div 8)-1 do
     begin
-     (blk as TUsek).Symbols.Data[j].Position.X := StrToIntDef(copy(obj, j*8+1, 3), 0);
-     (blk as TUsek).Symbols.Data[j].Position.Y := StrToIntDef(copy(obj, j*8+4, 3), 0);
-     (blk as TUsek).Symbols.Data[j].SymbolID   := StrToIntDef(copy(obj, j*8+7, 2), 0);
+     sym.Position.X := StrToIntDef(copy(obj, j*8+1, 3), 0);
+     sym.Position.Y := StrToIntDef(copy(obj, j*8+4, 3), 0);
+     sym.SymbolID   := StrToIntDef(copy(obj, j*8+7, 2), 0);
+     (blk as TUsek).Symbols.Add(sym);
 
-     if ((blk as TUsek).Symbols.Data[j].Position.X >= w) then Self.Errors.Add('WARNING: '+ExtractFileName(filename)+' Relief usek '+IntToStr(i)+': symbol presahuje sirku reliefu');
-     if ((blk as TUsek).Symbols.Data[j].Position.Y >= h) then Self.Errors.Add('WARNING: '+ExtractFileName(filename)+' Relief usek '+IntToStr(i)+': symbol presahuje vysku reliefu');
+     if (sym.Position.X >= w) then Self.Errors.Add('WARNING: '+ExtractFileName(filename)+' Relief usek '+IntToStr(i)+': symbol presahuje sirku reliefu');
+     if (sym.Position.Y >= h) then Self.Errors.Add('WARNING: '+ExtractFileName(filename)+' Relief usek '+IntToStr(i)+': symbol presahuje vysku reliefu');
     end;//for j
    if ((blk as TUsek).Symbols.Count = 0) then Self.Errors.Add('WARNING: '+ExtractFileName(filename)+' Relief usek '+IntToStr(i)+': neni zadny symbol');
 
@@ -947,7 +847,7 @@ begin
        // tady mame jisto, ze jsme ve spravne oblasti rizeni
        // prohleddame vsechny symboly bloku
        for k := 0 to (Self.TechBloky.Data[i].graph_blk.data[j] as TUsek).Symbols.Count-1 do
-         if ((UsekPos.X = (Self.TechBloky.Data[i].graph_blk.data[j] as TUsek).Symbols.Data[k].Position.X) and (UsekPos.Y = (Self.TechBloky.Data[i].graph_blk.data[j] as TUsek).Symbols.Data[k].Position.Y)) then
+         if ((UsekPos.X = (Self.TechBloky.Data[i].graph_blk.data[j] as TUsek).Symbols[k].Position.X) and (UsekPos.Y = (Self.TechBloky.Data[i].graph_blk.data[j] as TUsek).Symbols[k].Position.Y)) then
            Exit(Self.TechBloky.Data[i].id);
       end;//if oblRizeni
     end;//for j

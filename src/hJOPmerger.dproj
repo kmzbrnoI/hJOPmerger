@@ -56,6 +56,7 @@
 			<DCCReference Include="fDataCheck.pas">
 				<Form>F_DataCheck</Form>
 			</DCCReference>
+			<DCCReference Include="Bloky.pas"/>
 			<BuildConfiguration Include="Base">
 				<Key>Base</Key>
 			</BuildConfiguration>

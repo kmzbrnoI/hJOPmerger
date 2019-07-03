@@ -9,7 +9,8 @@ uses
   Verze in 'Verze.pas',
   Panel in 'Panel.pas',
   OblastRizeni in 'OblastRizeni.pas',
-  fDataCheck in 'fDataCheck.pas' {F_DataCheck};
+  fDataCheck in 'fDataCheck.pas' {F_DataCheck},
+  Bloky in 'Bloky.pas';
 
 {$R *.res}
 
@@ -21,7 +22,6 @@ begin
   Application.MainFormOnTaskbar := True;
   Application.CreateForm(TF_Main, F_Main);
   Application.CreateForm(TF_DataCheck, F_DataCheck);
-
   if (ParamCount > 0) then
    begin
     //open the file
