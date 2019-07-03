@@ -27,7 +27,7 @@ type
 
 TBlkType = (usek, navestidlo, vyhybka, prejezd, popisek, uvazka, uvazka_spr, zamek, vykolejka, rozp);
 
-// abstraktni trida, ze ktere se dedi graficke bloky
+// abstraktni trida, ze ktere dedi graficke bloky
 TGraphBlok = class
   OblRizeni:Integer;
 end;
@@ -37,7 +37,7 @@ TVyhybka = class(TGraphBlok)
   Position:TPoint;
   SymbolID:Integer;
   obj:integer;                 // technologicke id useku, na kterem vyhybka je
-end;//Navestidlo
+end;
 
 TReliefSym=record
   Position:TPoint;
@@ -88,7 +88,7 @@ TPopisek = class(TGraphBlok)
   Text:string;
   Position:TPoint;
   Color:Integer;
-end;//Text
+end;
 
 TUvazka = class(TGraphBlok)
   Pos:TPoint;
@@ -126,20 +126,20 @@ end;
 // technologicky blok
 // obsahuje reference na graficke bloky
 TTechBlok = class
-   typ:TBlkType;
-   id:Integer;
+  typ:TBlkType;
+  id:Integer;
 
-   graph_blk:record
-     data:array [0.._MAX_TECH_REL-1] of TGraphBlok;
-     cnt:Integer;
-   end;
+  graph_blk:record
+    data:array [0.._MAX_TECH_REL-1] of TGraphBlok;
+    cnt:Integer;
+  end;
 
   constructor Create(typ:TBlkType);
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-TRelief=class
+TRelief = class
   private
    // technologicke bloky
    TechBloky:record
