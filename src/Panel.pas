@@ -10,14 +10,16 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Controls, IniFiles,
-  Forms, OblastRizeni, Generics.Collections;
+  Forms, OblastRizeni, Generics.Collections, StrUtils;
 
 const
  _MAX_SYMBOLS  = 256;
  _MAX_TECH_REL = 256;
  _MAX_PRJ_LEN  = 10;
 
- _FileVersion = '1.1';
+  _FileVersion_accept : array[0..1] of string = (
+     '1.1', '1.2'
+  );
 
 type
 
@@ -30,7 +32,6 @@ TGraphBlok = class
   OblRizeni:Integer;
 end;
 
-// graficky blok vyhybka
 TVyhybka = class(TGraphBlok)
  PolohaPlus:Byte;
  Position:TPoint;
@@ -38,13 +39,11 @@ TVyhybka = class(TGraphBlok)
  obj:integer;                 // technologicke id useku, na kterem vyhybka je
 end;//Navestidlo
 
-  // patri useku
-  TReliefSym=record
-   Position:TPoint;
-   SymbolID:Integer;
-  end;
+TReliefSym=record
+ Position:TPoint;
+ SymbolID:Integer;
+end;
 
-// graficky blok usek
 TUsek = class(TGraphBlok)
  Symbols:record
    Data:array[0.._MAX_SYMBOLS] of TReliefSym;
@@ -64,13 +63,11 @@ TNavestidlo = class(TGraphBlok)
  UsekPred:Integer;    //technologicky usek
 end;//Navestidlo
 
-  // patri prejezdu
-  TBlikPoint = record
-   Pos:TPoint;
-   TechUsek:Integer;     // jaky technologicky usek ma tato cast prejezdu
-  end;
+TBlikPoint = record
+ Pos:TPoint;
+ TechUsek:Integer;     // jaky technologicky usek ma tato cast prejezdu
+end;
 
-// graficky blok prejezd
 TPrejezd = class(TGraphBlok)
  Blok:Integer;
 
@@ -87,14 +84,12 @@ TPrejezd = class(TGraphBlok)
  OblRizeni:Integer;
 end;//Navestidlo
 
-// popisek
 TPopisek = class(TGraphBlok)
  Text:string;
  Position:TPoint;
  Color:Integer;
 end;//Text
 
-// uvazka
 TUvazka = class(TGraphBlok)
   Pos:TPoint;
   defalt_dir:Integer;
@@ -103,7 +98,6 @@ end;
 
 TUvazkaSprVertDir = (top = 0, bottom = 1);
 
-//uvazka spr
 TUvazkaSpr = class(TGraphBlok)
   Pos:TPoint;
   vertical_dir:TUvazkaSprVertDir;
@@ -111,12 +105,10 @@ TUvazkaSpr = class(TGraphBlok)
   OblRizeni:Integer;
 end;
 
-// zamek
 TZamek = class(TGraphBlok)
  Pos:TPoint;
 end;
 
-// zamek
 TRozp = class(TGraphBlok)
  Pos:TPoint;
 end;
@@ -147,9 +139,7 @@ TRelief=class
     Count:Integer;
    end;
 
-
    ORs:TORs;                    //oblasti rizeni
-
    Errors:TStrings;             //sem se ulozi chyby pri nacitani a vrati se pri CheckValid()
 
     function FileLoad(const filename:string):Byte;
@@ -183,6 +173,8 @@ TRelief=class
     function CheckValid():TStrings;     //overi validitu dat a vrati chyby
 
     function ExportData(const filename:string):Byte;
+
+    class function FileSupportedVersionsStr():string;
 
     //spravny postup volani zvnejsku:
     // 1) FilesLoad
@@ -262,6 +254,7 @@ var i,j,return,id:Integer;
     w,h:Integer;
     blk:TGraphBlok;
     cnt:Integer;
+    versionOk:boolean;
 begin
  //kontrola existence
  if (not FileExists(filename)) then
@@ -279,15 +272,25 @@ begin
  end;
 
  //kontrola verze
- ver := inifile.ReadString('G','ver',_FileVersion);
- if (_FileVersion <> ver) then
+ ver := inifile.ReadString('G', 'ver', 'invalid');
+ versionOk := false;
+ for i := 0 to Length(_FileVersion_accept)-1 do
   begin
-   if (Application.MessageBox(PChar(filename+#13#10+'Naèítáte soubor s verzí '+ver+#13#10+'Aplikace momentálnì podporuje verzi '+_FileVersion+#13#10+'Chcete pokraèovat?'), 'Varování', MB_YESNO OR MB_ICONQUESTION) = mrNo) then
+   if (ver = _FileVersion_accept[i]) then
     begin
-     Result := 2;
-     Exit;
+     versionOk := true;
+     Break;
     end;
   end;
+
+ if (not versionOk) then
+  begin
+   if (Application.MessageBox(PChar('Naèítáte soubor s verzí '+ver+#13#10+
+       'Aplikace momentálnì podporuje verze '+Self.FileSupportedVersionsStr()+#13#10+'Chcete pokraèovat?'),
+       'Varování', MB_YESNO OR MB_ICONQUESTION) = mrNo) then
+     Exit();
+  end;
+
 
  DateTimeToString(Obj,'yyyy-mm-dd hh:nn:ss',Now);
  Self.Errors.Add('Loading validator: '+Obj+': '+ExtractFileName(filename));
@@ -1070,6 +1073,17 @@ begin
      Self.ORs.Data[new_or].Osvetleni.Add(Self.ORs.Data[orig_or].Osvetleni[i]);
   end;//for i
 end;//procedure
+
+////////////////////////////////////////////////////////////////////////////////
+
+class function TRelief.FileSupportedVersionsStr():string;
+var i: Integer;
+begin
+ Result := '';
+ for i := 0 to Length(_FileVersion_accept)-1 do
+   Result := Result + _FileVersion_accept[i] + ', ';
+ Result := LeftStr(Result, Length(Result)-2);
+end;
 
 ////////////////////////////////////////////////////////////////////////////////
 
