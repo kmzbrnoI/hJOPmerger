@@ -109,17 +109,17 @@ end;
 //nacitani vsech souboru
 //vraci index v hi, chybovy kod v lo
 procedure TRelief.FilesLoad(const filenames:TStrings);
-var i:Integer;
+var filename:string;
 begin
  Self.Reset();
 
- for i := 0 to filenames.Count-1 do
+ for filename in  filenames do
   begin
    try
-     Self.FileLoad(filenames[i]);
+     Self.FileLoad(filename);
    except
      on E:Exception do
-       Self.Errors.Add(filenames[i] + ': ' + E.Message);
+       Self.Errors.Add(filename + ': ' + E.Message);
    end;
   end;
 end;
@@ -145,7 +145,6 @@ begin
    raise Exception.Create('Soubor panelu ' + filename + ' neexistuje!');
 
  inifile := TMemIniFile.Create(filename, TEncoding.UTF8);
-
  try
    //kontrola verze
    ver := inifile.ReadString('G', 'ver', 'invalid');
