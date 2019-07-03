@@ -25,7 +25,7 @@ type
 
 ////////////////////////////////////////////////////////////////////////////////
 
-TBlkType = (usek, navestidlo, vyhybka, prejezd, popisek, uvazka, uvazka_spr, zamek, rozp);
+TBlkType = (usek, navestidlo, vyhybka, prejezd, popisek, uvazka, uvazka_spr, zamek, vykolejka, rozp);
 
 // abstraktni trida, ze ktere se dedi graficke bloky
 TGraphBlok = class
@@ -33,15 +33,15 @@ TGraphBlok = class
 end;
 
 TVyhybka = class(TGraphBlok)
- PolohaPlus:Byte;
- Position:TPoint;
- SymbolID:Integer;
- obj:integer;                 // technologicke id useku, na kterem vyhybka je
+  PolohaPlus:Byte;
+  Position:TPoint;
+  SymbolID:Integer;
+  obj:integer;                 // technologicke id useku, na kterem vyhybka je
 end;//Navestidlo
 
 TReliefSym=record
- Position:TPoint;
- SymbolID:Integer;
+  Position:TPoint;
+  SymbolID:Integer;
 end;
 
 TUsek = class(TGraphBlok)
@@ -55,39 +55,39 @@ end;
 
 // graficky blok navestidlo
 TNavestidlo = class(TGraphBlok)
- Blok:Integer;
- Position:TPoint;
- SymbolID:Integer;
- OblRizeni:Integer;
+  Blok:Integer;
+  Position:TPoint;
+  SymbolID:Integer;
+  OblRizeni:Integer;
 
- UsekPred:Integer;    //technologicky usek
+  UsekPred:Integer;    //technologicky usek
 end;//Navestidlo
 
 TBlikPoint = record
- Pos:TPoint;
- TechUsek:Integer;     // jaky technologicky usek ma tato cast prejezdu
+  Pos:TPoint;
+  TechUsek:Integer;     // jaky technologicky usek ma tato cast prejezdu
 end;
 
 TPrejezd = class(TGraphBlok)
- Blok:Integer;
+  Blok:Integer;
 
- StaticPositions: record
-  data:array [0.._MAX_PRJ_LEN] of TPoint;
-  Count:Byte;
- end;
+  StaticPositions: record
+   data:array [0.._MAX_PRJ_LEN] of TPoint;
+   Count:Byte;
+  end;
 
- BlikPositions: record
-  data:array [0.._MAX_PRJ_LEN] of TBlikPoint;
-  Count:Byte;
- end;
+  BlikPositions: record
+   data:array [0.._MAX_PRJ_LEN] of TBlikPoint;
+   Count:Byte;
+  end;
 
- OblRizeni:Integer;
+  OblRizeni:Integer;
 end;//Navestidlo
 
 TPopisek = class(TGraphBlok)
- Text:string;
- Position:TPoint;
- Color:Integer;
+  Text:string;
+  Position:TPoint;
+  Color:Integer;
 end;//Text
 
 TUvazka = class(TGraphBlok)
@@ -106,11 +106,19 @@ TUvazkaSpr = class(TGraphBlok)
 end;
 
 TZamek = class(TGraphBlok)
- Pos:TPoint;
+  Pos:TPoint;
+end;
+
+TVykolejka = class(TGraphBlok)
+  Blok:Integer;
+  Pos:TPoint;
+  symbol:Integer;
+  usek:integer;              // index useku, na kterem je vykolejka
+  vetev:integer;             // cislo vetve, ve kterem je vykolejka
 end;
 
 TRozp = class(TGraphBlok)
- Pos:TPoint;
+  Pos:TPoint;
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -508,6 +516,25 @@ begin
      Self.AddGraphBlk(blk, id, zamek);
   end;
 
+ // vykolejky
+ cnt := inifile.ReadInteger('P', 'Vyk', 0);
+ for i := 0 to cnt-1 do
+  begin
+   blk := TVykolejka.Create();
+   id  := inifile.ReadInteger('Vyk'+IntToStr(i), 'B', -1);
+   blk.OblRizeni := inifile.ReadInteger('Vyk'+IntToStr(i),'OR', -1) + start_OR;
+
+   (blk as TVykolejka).Pos.X := inifile.ReadInteger('Vyk'+IntToStr(i), 'X', 0);
+   (blk as TVykolejka).Pos.Y := inifile.ReadInteger('Vyk'+IntToStr(i), 'Y', 0);
+   (blk as TVykolejka).usek  := inifile.ReadInteger('Vyk'+IntToStr(i), 'O', -1);
+   (blk as TVykolejka).usek  := inifile.ReadInteger('U'+IntToStr((blk as TVykolejka).usek), 'B', -1);
+
+   if (id = -1) then Self.Errors.Add('ERROR: '+ExtractFileName(filename)+' Relief vykolejka '+IntToStr(i)+': neni navaznost na technologicky blok');
+
+   if (id > -1) then
+     Self.AddGraphBlk(blk, id, vykolejka);
+  end;
+
  // rozpojovace
  cnt := inifile.ReadInteger('P','R',0);
  for i := 0 to cnt-1 do
@@ -865,6 +892,21 @@ begin
    str := str + Self.GetTechBlkOR(i) + ';';
 
    ini.WriteString('Z', IntToStr(Self.TechBloky.Data[i].id), str);
+  end;//for i
+
+ //ulozit vykolejky
+ for i := 0 to Self.TechBloky.Count-1 do
+  begin
+   if (Self.TechBloky.Data[i].typ <> vykolejka) then continue;
+
+   //sestaveni OR
+   str := '';
+   str := str + Self.GetTechBlkOR(i) + ';';
+
+   //navaznost na usek
+   str := str + IntToStr((Self.TechBloky.Data[i].graph_blk.data[0] as TVykolejka).usek)+';';
+
+   ini.WriteString('V', IntToStr(Self.TechBloky.Data[i].id), str); // ulozit jako vyhybky
   end;//for i
 
  //ulozit rozpojovace
