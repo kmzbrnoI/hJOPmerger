@@ -1,4 +1,4 @@
-unit Panel;
+ï»¿unit Panel;
 
 //tato unita resi veskerou hlavni technologii programu - prace se slucovanim panelu
 //tato unita z velke casti prebira kod ReliefObjects.pas z Editoru
@@ -160,9 +160,9 @@ begin
 
    if (not versionOk) then
     begin
-     if (Application.MessageBox(PChar('Naèítáte soubor s verzí '+ver+#13#10+
-         'Aplikace momentálnì podporuje verze '+Self.FileSupportedVersionsStr()+#13#10+'Chcete pokraèovat?'),
-         'Varování', MB_YESNO OR MB_ICONQUESTION) = mrNo) then
+     if (Application.MessageBox(PChar('NaÄÃ­tÃ¡te soubor s verzÃ­ '+ver+#13#10+
+         'Aplikace momentÃ¡lnÄ› podporuje verze '+Self.FileSupportedVersionsStr()+#13#10+'Chcete pokraÄovat?'),
+         'VarovÃ¡nÃ­', MB_YESNO OR MB_ICONQUESTION) = mrNo) then
        Exit();
     end;
 
@@ -439,7 +439,7 @@ begin
    if (orig = -1) then Exit;
 
    if (not Self.CheckSimilarORs(orig, new)) then
-     Self.Errors.Add('ERROR: oblasti øízení s id ' + Self.ORs[orig].id + ' se neshodují v názvu nebo ve zkratce názvu!');
+     Self.Errors.Add('ERROR: oblasti Å™Ã­zenÃ­ s id ' + Self.ORs[orig].id + ' se neshodujÃ­ v nÃ¡zvu nebo ve zkratce nÃ¡zvu!');
 
    // duplicita nalezena -> merge
    // zachovavame orig, new mazeme

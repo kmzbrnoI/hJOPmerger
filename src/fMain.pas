@@ -1,4 +1,4 @@
-unit fMain;
+ï»¿unit fMain;
 
 interface
 
@@ -81,8 +81,8 @@ begin
    except
      on E:Exception do
       begin
-       Application.MessageBox(PChar('Chyba pøi naèítání souborù reliéfù:'+#13#10+E.Message+#13#10+
-        'Opravte chyby v souboru panelu a naètìtì soubor znovu!'), 'Chyba', MB_OK OR MB_ICONERROR);
+       Application.MessageBox(PChar('Chyba pÅ™i naÄÃ­tÃ¡nÃ­ souborÅ¯ reliÃ©fÅ¯:'+#13#10+E.Message+#13#10+
+        'Opravte chyby v souboru panelu a naÄtÄ›tÄ› soubor znovu!'), 'Chyba', MB_OK OR MB_ICONERROR);
        Exit();
       end;
    end;
@@ -95,7 +95,7 @@ begin
  except
    on E:Exception do
     begin
-     Application.MessageBox(PChar('Chyba pøi spojování souborù reliéfù:'+#13#10+E.Message), 'Chyba', MB_OK OR MB_ICONERROR);
+     Application.MessageBox(PChar('Chyba pÅ™i spojovÃ¡nÃ­ souborÅ¯ reliÃ©fÅ¯:'+#13#10+E.Message), 'Chyba', MB_OK OR MB_ICONERROR);
      Exit();
     end;
  end;
@@ -106,7 +106,7 @@ begin
  except
    on E:Exception do
     begin
-     Application.MessageBox(PChar('Chyba pøi kontrole validity souborù reliéfù:'+#13#10+E.Message), 'Chyba', MB_OK OR MB_ICONERROR);
+     Application.MessageBox(PChar('Chyba pÅ™i kontrole validity souborÅ¯ reliÃ©fÅ¯:'+#13#10+E.Message), 'Chyba', MB_OK OR MB_ICONERROR);
      Exit();
     end;
  end;
@@ -116,12 +116,12 @@ procedure TF_Main.A_ExportExecute(Sender: TObject);
 begin
  try
    Self.Relief.ExportData(Self.E_OutputFileName.Text);
-   Application.MessageBox(PChar('Export probìhl úspìšnì'+#13#10+'Vytvoøen soubor '+Self.E_OutputFileName.Text),
+   Application.MessageBox(PChar('Export probÄ›hl ÃºspÄ›Å¡nÄ›'+#13#10+'VytvoÅ™en soubor '+Self.E_OutputFileName.Text),
      'Info', MB_OK OR MB_ICONINFORMATION);
  except
    on E:Exception do
-     Application.MessageBox(PChar('Export se nezdaøil:'+#13#10+E.Message),
-       'Varování', MB_OK OR MB_ICONWARNING);
+     Application.MessageBox(PChar('Export se nezdaÅ™il:'+#13#10+E.Message),
+       'VarovÃ¡nÃ­', MB_OK OR MB_ICONWARNING);
  end;
 end;
 
@@ -180,7 +180,7 @@ end;
 
 procedure TF_Main.MI_AboutClick(Sender: TObject);
 begin
- Application.MessageBox(PChar('hJOPmerger'+#13#10+'Verze: '+GetVer(Application.ExeName)+#13#10+'Vytvoøil Jan Horáèek (c) 2013-2017 pro KM Brno I'),'Info',MB_OK OR MB_ICONINFORMATION);
+ Application.MessageBox(PChar('hJOPmerger'+#13#10+'Verze: '+GetVer(Application.ExeName)+#13#10+'VytvoÅ™il Jan HorÃ¡Äek (c) 2013-2017 pro KMÅ½ Brno I'),'Info',MB_OK OR MB_ICONINFORMATION);
 end;
 
 procedure TF_Main.MI_AppExitClick(Sender: TObject);
