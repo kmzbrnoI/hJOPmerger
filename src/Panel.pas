@@ -216,6 +216,7 @@ begin
      if ((blk as TUsek).Symbols.Count = 0) then Self.Errors.Add('WARNING: '+ExtractFileName(filename)+' Relief usek '+IntToStr(i)+': neni zadny symbol');
 
      (blk as TUsek).cislo_koleje := inifile.ReadString('U'+IntToStr(i),'N','');
+     (blk as TUsek).spr_pos := (inifile.ReadString('U'+IntToStr(i), 'Spr', '') <> '');
 
      if (id > -1) then
        Self.AddGraphBlk(blk, id, usek);
@@ -575,10 +576,14 @@ begin
      str := str + Self.GetTechBlkOR(tblk) + ';';
 
      if ((tblk.graph_blk[0] as TUsek).cislo_koleje <> '') then
-      begin
-       str := str + '1;' + TUsek(tblk.graph_blk[0]).cislo_koleje;
-      end else
-       str := str + '0';
+      str := str + '1;' + TUsek(tblk.graph_blk[0]).cislo_koleje + ';'
+     else
+      str := str + '0;;';
+
+     if ((tblk.graph_blk[0] as TUsek).spr_pos) then
+      str := str + '1;'
+     else
+      str := str + '0;';
 
      ini.WriteString('U', IntToStr(tblk.id), str);
     end;//for i

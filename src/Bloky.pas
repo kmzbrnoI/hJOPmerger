@@ -28,6 +28,7 @@ end;
 TUsek = class(TGraphBlok)
  Symbols:TList<TReliefSym>;
  cislo_koleje:string;
+ spr_pos:boolean;
  // zbytek neni potreba
 
  constructor Create();
