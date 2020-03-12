@@ -13,8 +13,13 @@ uses
   Forms, OblastRizeni, Generics.Collections, StrUtils, Bloky;
 
 const
-  _FileVersion_accept : array[0..1] of string = (
-     '1.1', '1.2'
+  _FILEVERSION_10 = $0100;
+  _FILEVERSION_11 = $0101;
+  _FILEVERSION_12 = $0102;
+  _FILEVERSION_13 = $0103;
+
+  _FileVersion_accept : array[0..2] of string = (
+     '1.1', '1.2', '1.3'
   );
 
 type
@@ -131,7 +136,8 @@ procedure TRelief.FileLoad(const filename:string);
 var i,j,return,id:Integer;
     inifile:TMemIniFile;
     Obj, ver, key:string;
-    sect_str:TStrings;
+    verWord: Word;
+    sect_str, strs:TStrings;
     start_OR:Integer;
     w,h:Integer;
     blk:TGraphBlok;
@@ -166,6 +172,13 @@ begin
        Exit();
     end;
 
+   strs := TStringList.Create();
+   try
+     ExtractStrings(['.'], [], PChar(ver), strs);
+     verWord := (StrToInt(strs[0]) shl 8) + StrToInt(strs[1]);
+   finally
+     strs.Free();
+   end;
 
    DateTimeToString(Obj,'yyyy-mm-dd hh:nn:ss',Now);
    Self.Errors.Add('Loading validator: '+Obj+': '+ExtractFileName(filename));
@@ -290,9 +303,16 @@ begin
      (blk as TPrejezd).BlikPositions.Clear();
      for j := 0 to (Length(obj) div 9)-1 do
       begin
-       bp.Pos.X := StrToIntDef(copy(obj, j*9+1, 3), 0);
-       bp.Pos.Y := StrToIntDef(copy(obj, j*9+4, 3), 0);
-       bp.TechUsek := StrToIntDef(copy(obj, j*9+7, 3), 0);
+       if (verWord >= _FILEVERSION_13) then
+        begin
+         bp.Pos.X := StrToIntDef(copy(obj, j*16+1, 3), 0);
+         bp.Pos.Y := StrToIntDef(copy(obj, j*16+4, 3), 0);
+         bp.TechUsek := StrToIntDef(copy(obj, j*16+7, 10), 0);
+        end else begin
+         bp.Pos.X := StrToIntDef(copy(obj, j*9+1, 3), 0);
+         bp.Pos.Y := StrToIntDef(copy(obj, j*9+4, 3), 0);
+         bp.TechUsek := StrToIntDef(copy(obj, j*9+7, 3), 0);
+        end;
 
        (blk as TPrejezd).BlikPositions.Add(bp);
       end;//for j
