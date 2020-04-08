@@ -6,7 +6,7 @@ uses Types, Generics.Collections;
 
 type
 
-TBlkType = (usek, navestidlo, vyhybka, prejezd, popisek, uvazka, uvazka_spr, zamek, vykolejka, rozp);
+TBlkType = (usek, navestidlo, vyhybka, prejezd, popisek, uvazka, uvazka_spr, zamek, vykolejka, rozp, ac);
 
 // abstraktni trida, ze ktere dedi graficke bloky
 TGraphBlok = class
@@ -47,7 +47,7 @@ end;//Navestidlo
 
 TBlikPoint = record
   Pos:TPoint;
-  TechUsek:Integer;     // jaky technologicky usek ma tato cast prejezdu
+  PanelUsek:Integer;     // jaky usek panelu ma tato cast prejezdu
 end;
 
 TPrejezd = class(TGraphBlok)
@@ -93,6 +93,10 @@ TVykolejka = class(TGraphBlok)
 end;
 
 TRozp = class(TGraphBlok)
+  Pos:TPoint;
+end;
+
+TAC = class(TGraphBlok)
   Pos:TPoint;
 end;
 
