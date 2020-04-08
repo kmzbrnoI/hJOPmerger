@@ -40,7 +40,7 @@ end;
 TRelief = class
   private
    // technologicke bloky
-   TechBloky:TObjectList<TTechBlok>;
+   TechBloky:TObjectDictionary<Integer, TTechBlok>;
    ORs:TObjectList<TOR>;
    Errors:TStrings; //sem se ulozi chyby pri nacitani a vrati se pri CheckValid()
 
@@ -89,7 +89,7 @@ begin
  inherited;
 
  Self.Errors := TStringList.Create();
- Self.TechBloky := TObjectList<TTechBlok>.Create();
+ Self.TechBloky := TObjectDictionary<Integer, TTechBlok>.Create();
  Self.ORs := TObjectList<TOR>.Create(TOr.NameComparer);
 end;
 
@@ -127,6 +127,8 @@ begin
        Self.Errors.Add(filename + ': ' + E.Message);
    end;
   end;
+
+
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -507,7 +509,7 @@ begin
  Self.Errors.Add(str);
 
  //kontrola prirazeni oblasti rizeni
- for tblk in Self.TechBloky do
+ for tblk in Self.TechBloky.Values do
   begin
    for blk in tblk.graph_blk do
      if (blk.OblRizeni >= Self.ORs.Count) then
@@ -605,7 +607,7 @@ begin
     end;
 
    // useky
-   for tblk in Self.TechBloky do
+   for tblk in Self.TechBloky.Values do
     begin
      if (tblk.typ <> usek) then continue;
 
@@ -628,7 +630,7 @@ begin
     end;
 
    // navestidla
-   for tblk in Self.TechBloky do
+   for tblk in Self.TechBloky.Values do
     begin
      if (tblk.typ <> navestidlo) then continue;
 
@@ -656,7 +658,7 @@ begin
     end;
 
    // vyhybky
-   for tblk in Self.TechBloky do
+   for tblk in Self.TechBloky.Values do
     begin
      if (tblk.typ <> vyhybka) then continue;
 
@@ -672,7 +674,7 @@ begin
     end;
 
    // prejezdy
-   for tblk in Self.TechBloky do
+   for tblk in Self.TechBloky.Values do
     begin
      if (tblk.typ <> prejezd) then continue;
 
@@ -685,7 +687,7 @@ begin
     end;
 
    // popisky
-   for tblk in Self.TechBloky do
+   for tblk in Self.TechBloky.Values do
     begin
      if (tblk.typ <> popisek) then continue;
 
@@ -700,7 +702,7 @@ begin
     end;
 
    // uvazky
-   for tblk in Self.TechBloky do
+   for tblk in Self.TechBloky.Values do
     begin
      if (tblk.typ <> uvazka) then continue;
 
@@ -712,7 +714,7 @@ begin
     end;
 
    // zamky
-   for tblk in Self.TechBloky do
+   for tblk in Self.TechBloky.Values do
     begin
      if (tblk.typ <> zamek) then continue;
 
@@ -724,7 +726,7 @@ begin
     end;
 
    // vykolejky
-   for tblk in Self.TechBloky do
+   for tblk in Self.TechBloky.Values do
     begin
      if (tblk.typ <> vykolejka) then continue;
 
@@ -739,7 +741,7 @@ begin
     end;
 
    // rozpojovace
-   for tblk in Self.TechBloky do
+   for tblk in Self.TechBloky.Values do
     begin
      if (tblk.typ <> rozp) then continue;
 
@@ -751,7 +753,7 @@ begin
     end;
 
    // AC
-   for tblk in Self.TechBloky do
+   for tblk in Self.TechBloky.Values do
     begin
      if (tblk.typ <> AC) then continue;
 
@@ -778,7 +780,7 @@ var blk:TGraphBlok;
     tblk:TTechBlok;
 begin
  // prijdeme vsechny technologicke useky
- for tblk in Self.TechBloky do
+ for tblk in Self.TechBloky.Values do
   begin
    if (tblk.typ <> usek) then continue;
    
@@ -831,23 +833,11 @@ end;
 // pridava blok v parametru do technologickych bloku:
 
 procedure TRelief.AddGraphBlk(data:TGraphBlok; id:Integer; typ:TBlkType);
-var i, index:Integer;
 begin
- index := Self.TechBloky.Count;
- for i := 0 to Self.TechBloky.Count-1 do
-  begin
-   if ((Self.TechBloky[i].id = id) and (typ = Self.TechBloky[i].typ)) then
-    begin
-     index := i;
-     Break;
-    end;
-  end;
-
- if (index = Self.TechBloky.Count) then
-   Self.TechBloky.Add(TTechBlok.Create(typ));
-
- Self.TechBloky[index].graph_blk.Add(data);
- Self.TechBloky[index].id  := id;
+ if (not Self.TechBloky.ContainsKey(id)) then
+  Self.TechBloky.Add(id, TTechBlok.Create(typ));
+ Self.TechBloky[id].graph_blk.Add(data);
+ Self.TechBloky[id].id := id;
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
