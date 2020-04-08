@@ -4,7 +4,7 @@ object F_Main: TF_Main
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = 'hJOPmerger'
-  ClientHeight = 592
+  ClientHeight = 523
   ClientWidth = 645
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -79,13 +79,6 @@ object F_Main: TF_Main
       TabOrder = 0
     end
   end
-  object SB_Main: TStatusBar
-    Left = 0
-    Top = 573
-    Width = 645
-    Height = 19
-    Panels = <>
-  end
   object GB_Export: TGroupBox
     Left = 0
     Top = 418
@@ -93,7 +86,7 @@ object F_Main: TF_Main
     Height = 105
     Align = alTop
     Caption = ' F'#225'ze 3: exportovat data pro server '
-    TabOrder = 3
+    TabOrder = 2
     object Label1: TLabel
       Left = 16
       Top = 24

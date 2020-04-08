@@ -31,7 +31,6 @@ type
     F_FileOpen: TAction;
     A_FileClose: TAction;
     A_Check: TAction;
-    SB_Main: TStatusBar;
     GB_Export: TGroupBox;
     Label1: TLabel;
     E_OutputFileName: TEdit;
@@ -110,6 +109,8 @@ begin
      Exit();
     end;
  end;
+
+ Self.A_Export.Enabled := true;
 end;
 
 procedure TF_Main.A_ExportExecute(Sender: TObject);
@@ -138,7 +139,6 @@ begin
   begin
    Self.E_OutputFileName.Text := Self.SD_SaveSpnl.FileName;
    if (RightStr(Self.E_OutputFileName.Text,5) <> '.spnl') then Self.E_OutputFileName.Text := Self.E_OutputFileName.Text + '.spnl';
-   Self.A_Export.Enabled := true;
   end;
 end;
 
@@ -165,7 +165,7 @@ end;
 procedure TF_Main.LV_InputFilesChange(Sender: TObject; Item: TListItem;
   Change: TItemChange);
 begin
- if ((Sender as TListView).Selected <> nil) then Self.A_FileClose.Enabled := true else Self.A_FileClose.Enabled := false;
+ Self.A_FileClose.Enabled := ((Sender as TListView).Selected <> nil);
 end;
 
 procedure TF_Main.LV_InputFilesDblClick(Sender: TObject);
@@ -195,7 +195,8 @@ begin
  LI.Caption := filename;
 
  Self.A_Check.Enabled := true;
- if (Self.A_Export.Enabled) then Self.A_Export.Enabled := false;
+ if (Self.A_Export.Enabled) then
+   Self.A_Export.Enabled := false;
 end;
 
 end.//unit
