@@ -4,7 +4,7 @@ unit OblastRizeni;
 
 interface
 
-uses Types, Generics.Collections, Classes, SysUtils;
+uses Types, Generics.Collections, Classes, SysUtils, Generics.Defaults;
 
 const
   _MAX_OR  = 256;
@@ -49,6 +49,8 @@ type
   constructor Create(const str:string);
   destructor Destroy(); override;
   procedure Load(const str:string);
+
+  class function NameComparer():IComparer<TOR>;
  end;
 
 implementation
@@ -128,6 +130,18 @@ begin
    data_osv.Free();
    data_osv2.Free();
  end;
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+
+class function TOR.NameComparer():IComparer<TOR>;
+begin
+ Result := TComparer<TOR>.Construct(
+  function(const Left, Right: TOR): Integer
+   begin
+    Result := CompareStr(Left.Name, Right.Name, loUserLocale);
+   end
+ );
 end;
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -90,7 +90,7 @@ begin
 
  Self.Errors := TStringList.Create();
  Self.TechBloky := TObjectList<TTechBlok>.Create();
- Self.ORs := TObjectList<TOR>.Create();
+ Self.ORs := TObjectList<TOR>.Create(TOr.NameComparer);
 end;
 
 destructor TRelief.Destroy;
@@ -194,6 +194,7 @@ begin
      inifile.ReadSection('OR', sect_str);
      for key in sect_str do
        Self.ORs.Add(TOR.Create(inifile.ReadString('OR', key, '')));
+     Self.ORs.Sort();
    finally
      sect_str.Free();
    end;
