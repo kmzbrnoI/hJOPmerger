@@ -10,7 +10,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Controls, IniFiles,
-  Forms, OblastRizeni, Generics.Collections, StrUtils, Bloky;
+  Forms, OblastRizeni, Generics.Collections, StrUtils, Bloky,
+  Generics.Defaults, Math;
 
 const
   _FILEVERSION_10 = $0100;
@@ -33,6 +34,8 @@ TTechBlok = class
 
   constructor Create(typ:TBlkType);
   destructor Destroy(); override;
+
+  class function IdComparer():IComparer<TTechBlok>;
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -41,6 +44,7 @@ TRelief = class
   private
    // technologicke bloky
    TechBloky:TObjectDictionary<Integer, TTechBlok>;
+   TechBlokySorted:TList<TTechBlok>;
    ORs:TObjectList<TOR>;
    Errors:TStrings; //sem se ulozi chyby pri nacitani a vrati se pri CheckValid()
 
@@ -90,6 +94,7 @@ begin
 
  Self.Errors := TStringList.Create();
  Self.TechBloky := TObjectDictionary<Integer, TTechBlok>.Create();
+ Self.TechBlokySorted := TList<TTechBlok>.Create(TTechBlok.IdComparer);
  Self.ORs := TObjectList<TOR>.Create(TOr.NameComparer);
 end;
 
@@ -98,6 +103,7 @@ begin
  Self.Reset();
  Self.ORs.Free();
  Self.TechBloky.Free();
+ Self.TechBlokySorted.Clear();
  Self.Errors.Free();
 
  inherited;
@@ -107,6 +113,7 @@ end;
 procedure TRelief.Reset();
 begin
  Self.TechBloky.Clear();
+ Self.TechBlokySorted.Clear();
  Self.ORs.Clear();
  Self.Errors.Clear();
 end;
@@ -115,6 +122,7 @@ end;
 //vraci index v hi, chybovy kod v lo
 procedure TRelief.FilesLoad(const filenames:TStrings);
 var filename:string;
+    techBlk:TTechBlok;
 begin
  Self.Reset();
 
@@ -128,7 +136,9 @@ begin
    end;
   end;
 
-
+ for techBlk in Self.TechBloky.Values do
+   Self.TechBlokySorted.Add(techBlk);
+ Self.TechBlokySorted.Sort();
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -607,7 +617,7 @@ begin
     end;
 
    // useky
-   for tblk in Self.TechBloky.Values do
+   for tblk in Self.TechBlokySorted do
     begin
      if (tblk.typ <> usek) then continue;
 
@@ -630,7 +640,7 @@ begin
     end;
 
    // navestidla
-   for tblk in Self.TechBloky.Values do
+   for tblk in Self.TechBlokySorted do
     begin
      if (tblk.typ <> navestidlo) then continue;
 
@@ -658,7 +668,7 @@ begin
     end;
 
    // vyhybky
-   for tblk in Self.TechBloky.Values do
+   for tblk in Self.TechBlokySorted do
     begin
      if (tblk.typ <> vyhybka) then continue;
 
@@ -674,7 +684,7 @@ begin
     end;
 
    // prejezdy
-   for tblk in Self.TechBloky.Values do
+   for tblk in Self.TechBlokySorted do
     begin
      if (tblk.typ <> prejezd) then continue;
 
@@ -687,7 +697,7 @@ begin
     end;
 
    // popisky
-   for tblk in Self.TechBloky.Values do
+   for tblk in Self.TechBlokySorted do
     begin
      if (tblk.typ <> popisek) then continue;
 
@@ -702,7 +712,7 @@ begin
     end;
 
    // uvazky
-   for tblk in Self.TechBloky.Values do
+   for tblk in Self.TechBlokySorted do
     begin
      if (tblk.typ <> uvazka) then continue;
 
@@ -714,7 +724,7 @@ begin
     end;
 
    // zamky
-   for tblk in Self.TechBloky.Values do
+   for tblk in Self.TechBlokySorted do
     begin
      if (tblk.typ <> zamek) then continue;
 
@@ -726,7 +736,7 @@ begin
     end;
 
    // vykolejky
-   for tblk in Self.TechBloky.Values do
+   for tblk in Self.TechBlokySorted do
     begin
      if (tblk.typ <> vykolejka) then continue;
 
@@ -741,7 +751,7 @@ begin
     end;
 
    // rozpojovace
-   for tblk in Self.TechBloky.Values do
+   for tblk in Self.TechBlokySorted do
     begin
      if (tblk.typ <> rozp) then continue;
 
@@ -753,7 +763,7 @@ begin
     end;
 
    // AC
-   for tblk in Self.TechBloky.Values do
+   for tblk in Self.TechBlokySorted do
     begin
      if (tblk.typ <> AC) then continue;
 
@@ -835,7 +845,13 @@ end;
 procedure TRelief.AddGraphBlk(data:TGraphBlok; id:Integer; typ:TBlkType);
 begin
  if (not Self.TechBloky.ContainsKey(id)) then
-  Self.TechBloky.Add(id, TTechBlok.Create(typ));
+  Self.TechBloky.Add(id, TTechBlok.Create(typ))
+ else if(Self.TechBloky[id].typ <> typ) then
+  begin
+   Errors.Add('ERROR: Blok id '+IntToStr(id)+': toto ID mají přiřazené bloky různého typu!');
+   Exit();
+  end;
+
  Self.TechBloky[id].graph_blk.Add(data);
  Self.TechBloky[id].id := id;
 end;
@@ -947,6 +963,18 @@ begin
  for i := 0 to Length(_FileVersion_accept)-1 do
    Result := Result + _FileVersion_accept[i] + ', ';
  Result := LeftStr(Result, Length(Result)-2);
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+
+class function TTechBlok.IdComparer():IComparer<TTechBlok>;
+begin
+ Result := TComparer<TTechBlok>.Construct(
+  function(const Left, Right: TTechBlok): Integer
+   begin
+    Result := CompareValue(Left.id, Right.id);
+   end
+ );
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
