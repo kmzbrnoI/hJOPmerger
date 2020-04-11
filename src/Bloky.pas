@@ -6,7 +6,7 @@ uses Types, Generics.Collections;
 
 type
 
-TBlkType = (usek, navestidlo, vyhybka, prejezd, popisek, uvazka, uvazka_spr, zamek, vykolejka, rozp, ac);
+TBlkType = (usek, navestidlo, vyhybka, prejezd, popisek, uvazka, uvazka_spr, zamek, vykolejka, rozp, pomocny);
 
 // abstraktni trida, ze ktere dedi graficke bloky
 TGraphBlok = class
@@ -96,7 +96,7 @@ TRozp = class(TGraphBlok)
   Pos:TPoint;
 end;
 
-TAC = class(TGraphBlok)
+TPomocny = class(TGraphBlok)
   Pos:TPoint;
 end;
 

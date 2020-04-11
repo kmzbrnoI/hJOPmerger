@@ -35,7 +35,7 @@ TTechBlok = class
   constructor Create(typ:TBlkType);
   destructor Destroy(); override;
 
-  class function IdComparer():IComparer<TTechBlok>;
+  class function TypeAndIdComparer():IComparer<TTechBlok>;
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -66,6 +66,7 @@ TRelief = class
     procedure FindSimilarORs(var or1:Integer; var or2:Integer);
     function CheckSimilarORs(or1:Integer; or2:Integer):Boolean;     // zkontroluje, jestli jsou OR opravdu stejne
         // vrati true, pokud ok, jinak false
+    function BlkTypeToSectSpnlName(typ: TBlkType): string;
 
   public
     constructor Create();
@@ -94,7 +95,7 @@ begin
 
  Self.Errors := TStringList.Create();
  Self.TechBloky := TObjectDictionary<Integer, TTechBlok>.Create();
- Self.TechBlokySorted := TList<TTechBlok>.Create(TTechBlok.IdComparer);
+ Self.TechBlokySorted := TList<TTechBlok>.Create(TTechBlok.TypeAndIdComparer);
  Self.ORs := TObjectList<TOR>.Create(TOr.NameComparer);
 end;
 
@@ -279,14 +280,14 @@ begin
     end;//for i
 
    // pomocne symboly
-   cnt := inifile.ReadInteger('P','P',0);
+   cnt := inifile.ReadInteger('P','P', 0);
    for i := 0 to cnt-1 do
     begin
-     id  := inifile.ReadInteger('P'+IntToStr(i),'B', -1);
+     id  := inifile.ReadInteger('P'+IntToStr(i), 'B', -1);
      if (id > -1) then
       begin
-       blk := TAC.Create();
-       Self.AddGraphBlk(blk, id, TBlkType.ac);
+       blk := TPomocny.Create();
+       Self.AddGraphBlk(blk, id, TBlkType.pomocny);
       end;
     end;
 
@@ -619,164 +620,75 @@ begin
    // useky
    for tblk in Self.TechBlokySorted do
     begin
-     if (tblk.typ <> usek) then continue;
+     str := Self.GetTechBlkOR(tblk) + ';';
 
-     str := '';
+     case (tblk.typ) of
+      TBlkType.usek: begin
+         if ((tblk.graph_blk[0] as TUsek).cislo_koleje <> '') then
+          str := str + '1;' + TUsek(tblk.graph_blk[0]).cislo_koleje + ';'
+         else
+          str := str + '0;;';
 
-     //sestaveni OR
-     str := str + Self.GetTechBlkOR(tblk) + ';';
+         if ((tblk.graph_blk[0] as TUsek).spr_pos) then
+          str := str + '1;'
+         else
+          str := str + '0;';
+      end;
 
-     if ((tblk.graph_blk[0] as TUsek).cislo_koleje <> '') then
-      str := str + '1;' + TUsek(tblk.graph_blk[0]).cislo_koleje + ';'
-     else
-      str := str + '0;;';
+      TBlkType.navestidlo: begin
+         // typ symbolu
+         case ((tblk.graph_blk[0] as TNavestidlo).SymbolID) of
+          0,1:str := str + '0;';
+          //2,3 jsou AB
+          4,5:str := str + '1;';
+         end;//case
 
-     if ((tblk.graph_blk[0] as TUsek).spr_pos) then
-      str := str + '1;'
-     else
-      str := str + '0;';
+         case (Self.ORs[tblk.graph_blk[0].OblRizeni].Lichy xor ((tblk.graph_blk[0] as TNavestidlo).SymbolID mod 2)) of
+          0:str := str + '0;';
+          1:str := str + '1;';
+         end;
 
-     ini.WriteString('U', IntToStr(tblk.id), str);
-    end;
+         //usek pred id
+         str := str + IntToStr((tblk.graph_blk[0] as TNavestidlo).UsekPred);
+      end;
 
-   // navestidla
-   for tblk in Self.TechBlokySorted do
-    begin
-     if (tblk.typ <> navestidlo) then continue;
+      TBlkType.vyhybka: begin
+         str := str + IntToStr((tblk.graph_blk[0] as TVyhybka).obj)+';'; // navaznost na usek
+      end;
 
-     str := '';
+      TBlkType.vykolejka: begin
+         str := str + IntToStr((tblk.graph_blk[0] as TVykolejka).usek)+';';  // navaznost na usek
+      end;
 
-     //sestaveni OR
-     str := str + Self.GetTechBlkOR(tblk) + ';';
+     end;
 
-     //typ symbolu
-     case ((tblk.graph_blk[0] as TNavestidlo).SymbolID) of
-      0,1:str := str + '0;';
-      //2,3 jsou AB
-      4,5:str := str + '1;';
-     end;//case
-
-    case (Self.ORs[tblk.graph_blk[0].OblRizeni].Lichy xor ((tblk.graph_blk[0] as TNavestidlo).SymbolID mod 2)) of
-     0:str := str + '0;';
-     1:str := str + '1;';
-    end;
-
-     //usek pred id
-     str := str + IntToStr((tblk.graph_blk[0] as TNavestidlo).UsekPred);
-
-     ini.WriteString('N',IntToStr(tblk.id), str);
-    end;
-
-   // vyhybky
-   for tblk in Self.TechBlokySorted do
-    begin
-     if (tblk.typ <> vyhybka) then continue;
-
-     str := '';
-
-     //sestaveni OR
-     str := str + Self.GetTechBlkOR(tblk) + ';';
-
-     //navaznost na usek
-     str := str + IntToStr((tblk.graph_blk[0] as TVyhybka).obj)+';';
-
-     ini.WriteString('V',IntToStr(tblk.id),str);
-    end;
-
-   // prejezdy
-   for tblk in Self.TechBlokySorted do
-    begin
-     if (tblk.typ <> prejezd) then continue;
-
-     str := '';
-
-     //sestaveni OR
-     str := str + Self.GetTechBlkOR(tblk) + ';';
-
-     ini.WriteString('PRJ', IntToStr(tblk.id), str);
-    end;
-
-   // popisky
-   for tblk in Self.TechBlokySorted do
-    begin
-     if (tblk.typ <> popisek) then continue;
-
-     if (Length((tblk.graph_blk[0] as TPopisek).Text) <> 1) then continue;
-
-     str := '';
-
-     //sestaveni OR
-     str := str + Self.GetTechBlkOR(tblk) + ';';
-
-     ini.WriteString('T', IntToStr(tblk.id), str);
-    end;
-
-   // uvazky
-   for tblk in Self.TechBlokySorted do
-    begin
-     if (tblk.typ <> uvazka) then continue;
-
-     //sestaveni OR
-     str := '';
-     str := str + Self.GetTechBlkOR(tblk) + ';';
-
-     ini.WriteString('Uv', IntToStr(tblk.id), str);
-    end;
-
-   // zamky
-   for tblk in Self.TechBlokySorted do
-    begin
-     if (tblk.typ <> zamek) then continue;
-
-     //sestaveni OR
-     str := '';
-     str := str + Self.GetTechBlkOR(tblk) + ';';
-
-     ini.WriteString('Z', IntToStr(tblk.id), str);
-    end;
-
-   // vykolejky
-   for tblk in Self.TechBlokySorted do
-    begin
-     if (tblk.typ <> vykolejka) then continue;
-
-     //sestaveni OR
-     str := '';
-     str := str + Self.GetTechBlkOR(tblk) + ';';
-
-     //navaznost na usek
-     str := str + IntToStr((tblk.graph_blk[0] as TVykolejka).usek)+';';
-
-     ini.WriteString('V', IntToStr(tblk.id), str); // ulozit jako vyhybky
-    end;
-
-   // rozpojovace
-   for tblk in Self.TechBlokySorted do
-    begin
-     if (tblk.typ <> rozp) then continue;
-
-     //sestaveni OR
-     str := '';
-     str := str + Self.GetTechBlkOR(tblk) + ';';
-
-     ini.WriteString('R', IntToStr(tblk.id), str);
-    end;
-
-   // AC
-   for tblk in Self.TechBlokySorted do
-    begin
-     if (tblk.typ <> AC) then continue;
-
-     //sestaveni OR
-     str := '';
-     str := str + Self.GetTechBlkOR(tblk) + ';';
-
-     ini.WriteString('AC', IntToStr(tblk.id), str);
+     ini.WriteString(Self.BlkTypeToSectSpnlName(tblk.typ), IntToStr(tblk.id), str);
     end;
 
  finally
    ini.UpdateFile();
    ini.Free();
+ end;
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+
+function TRelief.BlkTypeToSectSpnlName(typ: TBlkType): string;
+begin
+ case (typ) of
+  TBlkType.usek: Result := 'U';
+  TBlkType.navestidlo: Result := 'N';
+  TBlkType.vyhybka: Result := 'V';
+  TBlkType.prejezd: Result := 'PRJ';
+  TBlkType.popisek: Result := 'T';
+  TBlkType.uvazka: Result := 'Uv';
+  TBlkType.uvazka_spr: Result := 'U';
+  TBlkType.zamek: Result := 'Z';
+  TBlkType.vykolejka: Result := 'V';
+  TBlkType.rozp: Result := 'R';
+  TBlkType.pomocny: Result := 'POM';
+ else
+  raise Exception.Create('Invalid block type!');
  end;
 end;
 
@@ -967,12 +879,14 @@ end;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class function TTechBlok.IdComparer():IComparer<TTechBlok>;
+class function TTechBlok.TypeAndIdComparer():IComparer<TTechBlok>;
 begin
  Result := TComparer<TTechBlok>.Construct(
   function(const Left, Right: TTechBlok): Integer
    begin
-    Result := CompareValue(Left.id, Right.id);
+    Result := CompareValue(Integer(Left.typ), Integer(Right.typ));
+    if (Result = 0) then
+      Result := CompareValue(Left.id, Right.id);
    end
  );
 end;
