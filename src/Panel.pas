@@ -207,7 +207,6 @@ begin
      inifile.ReadSection('OR', sect_str);
      for key in sect_str do
        Self.ORs.Add(TOR.Create(inifile.ReadString('OR', key, '')));
-     Self.ORs.Sort();
    finally
      sect_str.Free();
    end;
@@ -599,23 +598,31 @@ var ini:TMemIniFile;
     str:string;
     tblk:TTechBlok;
     oblr:TOR;
+    ORsSorted: TList<TOR>;
 begin
  DeleteFile(filename);
  ini := TMemIniFile.Create(filename, TEncoding.UTF8);
 
  try
    // OR
-   for i := 0 to Self.ORs.Count-1 do
-    begin
-     oblr := Self.ORs[i];
-     // ukladame specificky upravena data, protoze smysl ma ukladat jen data u vsech OR stajna
-     // = nazev, zkratka a unikatni nazev
-     str := oblr.Name + ';' + oblr.ShortName + ';' + oblr.id + ';';
-     for j := 0 to oblr.Osvetleni.Count-1 do
-       str := str + '(' + IntToStr(oblr.Osvetleni[j].board) + '|' + IntToStr(oblr.Osvetleni[j].port) + '|' + oblr.Osvetleni[j].name + ')';
-     str := str + ';';
-     ini.WriteString('OR', IntToStr(i), str);
-    end;
+   ORsSorted := TList<TOR>.Create(TOR.NameComparer);
+   try
+     ORsSorted.AddRange(Self.ORs);
+     ORsSorted.Sort();
+     for i := 0 to ORsSorted.Count-1 do
+      begin
+       oblr := ORsSorted[i];
+       // ukladame specificky upravena data, protoze smysl ma ukladat jen data u vsech OR stejna
+       // = nazev, zkratka a unikatni nazev
+       str := oblr.Name + ';' + oblr.ShortName + ';' + oblr.id + ';';
+       for j := 0 to oblr.Osvetleni.Count-1 do
+         str := str + '(' + IntToStr(oblr.Osvetleni[j].board) + '|' + IntToStr(oblr.Osvetleni[j].port) + '|' + oblr.Osvetleni[j].name + ')';
+       str := str + ';';
+       ini.WriteString('OR', IntToStr(i), str);
+      end;
+   finally
+     ORsSorted.Free();
+   end;
 
    // useky
    for tblk in Self.TechBlokySorted do
@@ -758,7 +765,7 @@ procedure TRelief.AddGraphBlk(data:TGraphBlok; id:Integer; typ:TBlkType);
 begin
  if (not Self.TechBloky.ContainsKey(id)) then
   Self.TechBloky.Add(id, TTechBlok.Create(typ))
- else if(Self.TechBloky[id].typ <> typ) then
+ else if (Self.TechBloky[id].typ <> typ) then
   begin
    Errors.Add('ERROR: Blok id '+IntToStr(id)+': toto ID mají přiřazené bloky různého typu!');
    Exit();
@@ -773,28 +780,30 @@ end;
 // nahradi oblast rizeni u bloku s orig_or na new_or
 // pouzivano pri merge oblasti rizeni
 procedure TRelief.ReplaceBlkOR(orig_or:Integer; new_or:Integer);
-var i, j:Integer;
+var graphBlok: TGraphBlok;
+    techBlok: TTechBlok;
 begin
- for i := 0 to Self.TechBloky.Count-1 do
-   for j := 0 to Self.TechBloky[i].graph_blk.Count-1 do
-     if (Self.TechBloky[i].graph_blk[j].OblRizeni = orig_or) then
-       Self.TechBloky[i].graph_blk[j].OblRizeni := new_or;
+ for techBlok in Self.TechBloky.Values do
+   for graphBlok in techBlok.graph_blk do
+     if (graphBlok.OblRizeni = orig_or) then
+       graphBlok.OblRizeni := new_or;
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
 
 // maze oblast rizeni
-// vyuzivano pri merge oblsti rizeni
+// vyuzivano pri merge oblasti rizeni
 procedure TRelief.DeleteOR(index:Integer);
-var i, j:Integer;
+var techBlok: TTechBlok;
+    graphBlok: TGraphBlok;
 begin
  Self.ORs.Delete(index);
 
  // vsem blokum, ktere mely OR tuto a vesti musime dekrementovat OR
- for i := 0 to Self.TechBloky.Count-1 do
-   for j := 0 to Self.TechBloky[i].graph_blk.Count-1 do
-     if (Self.TechBloky[i].graph_blk[j].OblRizeni >= index) then
-       Self.TechBloky[i].graph_blk[j].OblRizeni := Self.TechBloky[i].graph_blk[j].OblRizeni-1;
+ for techBlok in Self.TechBloky.Values do
+   for graphBlok in techBlok.graph_blk do
+     if (graphBlok.OblRizeni >= index) then
+       graphBlok.OblRizeni := graphBlok.OblRizeni-1;
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
