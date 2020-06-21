@@ -266,7 +266,7 @@ begin
      if ((blk as TNavestidlo).Position.Y >= h) then Self.Errors.Add('WARNING: '+ExtractFileName(filename)+' Relief navestidlo '+IntToStr(i)+': symbol presahuje vysku reliefu');
 
      (blk as TNavestidlo).SymbolID   := inifile.ReadInteger('N'+IntToStr(i),'S',0);
-     blk.OblRizeni  := inifile.ReadInteger('N'+IntToStr(i),'OR',-1) + start_OR;
+     blk.OblRizeni := inifile.ReadInteger('N'+IntToStr(i),'OR',-1) + start_OR;
      if (blk.OblRizeni = start_OR-1) then Self.Errors.Add('ERROR: '+ExtractFileName(filename)+' Relief navestidlo '+IntToStr(i)+': neni navaznost na oblast rizeni');
 
      case ((blk as TNavestidlo).SymbolID) of
@@ -282,10 +282,11 @@ begin
    cnt := inifile.ReadInteger('P','P', 0);
    for i := 0 to cnt-1 do
     begin
-     id  := inifile.ReadInteger('P'+IntToStr(i), 'B', -1);
+     id := inifile.ReadInteger('P'+IntToStr(i), 'B', -1);
      if (id > -1) then
       begin
        blk := TPomocny.Create();
+       blk.OblRizeni := inifile.ReadInteger('P'+IntToStr(i), 'OR', -1)+start_OR;
        Self.AddGraphBlk(blk, id, TBlkType.pomocny);
       end;
     end;
@@ -294,24 +295,24 @@ begin
    cnt := inifile.ReadInteger('P','V',0);
    for i := 0 to cnt-1 do
     begin
-     id  := inifile.ReadInteger('V'+IntToStr(i),'B',-1);
+     id := inifile.ReadInteger('V'+IntToStr(i),'B',-1);
      if (id = -1) then
        Self.Errors.Add('ERROR: '+ExtractFileName(filename)+' Relief vyhybka '+IntToStr(i)+': neni navaznost na technologicky blok');
      if (id < 0) then continue;
 
      blk := TVyhybka.Create();
 
-     (blk as TVyhybka).SymbolID    := inifile.ReadInteger('V'+IntToStr(i),'S',0);
-     (blk as TVyhybka).PolohaPlus  := inifile.ReadInteger('V'+IntToStr(i),'P',0);
-     (blk as TVyhybka).Position.X  := inifile.ReadInteger('V'+IntToStr(i),'X',0);
-     (blk as TVyhybka).Position.Y  := inifile.ReadInteger('V'+IntToStr(i),'Y',0);
+     (blk as TVyhybka).SymbolID := inifile.ReadInteger('V'+IntToStr(i),'S',0);
+     (blk as TVyhybka).PolohaPlus := inifile.ReadInteger('V'+IntToStr(i),'P',0);
+     (blk as TVyhybka).Position.X := inifile.ReadInteger('V'+IntToStr(i),'X',0);
+     (blk as TVyhybka).Position.Y := inifile.ReadInteger('V'+IntToStr(i),'Y',0);
      if ((blk as TVyhybka).Position.X >= w) then Self.Errors.Add('WARNING: '+ExtractFileName(filename)+' Relief vyhybka '+IntToStr(i)+': symbol presahuje sirku reliefu');
      if ((blk as TVyhybka).Position.Y >= h) then Self.Errors.Add('WARNING: '+ExtractFileName(filename)+' Relief vyhybka '+IntToStr(i)+': symbol presahuje vysku reliefu');
 
-     (blk as TVyhybka).obj         := inifile.ReadInteger('V'+IntToStr(i),'O',-1);
-     (blk as TVyhybka).obj         := inifile.ReadInteger('U'+IntToStr((blk as TVyhybka).obj),'B',-1);
+     (blk as TVyhybka).obj := inifile.ReadInteger('V'+IntToStr(i),'O',-1);
+     (blk as TVyhybka).obj := inifile.ReadInteger('U'+IntToStr((blk as TVyhybka).obj),'B',-1);
 
-     blk.OblRizeni   := inifile.ReadInteger('V'+IntToStr(i),'OR',-1)+start_OR;
+     blk.OblRizeni := inifile.ReadInteger('V'+IntToStr(i),'OR',-1)+start_OR;
      if (blk.OblRizeni = start_OR-1) then Self.Errors.Add('ERROR: '+ExtractFileName(filename)+' Relief vyhybka '+IntToStr(i)+': neni navaznost na oblast rizeni');
 
      Self.AddGraphBlk(blk, id, vyhybka);
