@@ -265,9 +265,11 @@ begin
      if ((blk as TNavestidlo).Position.X >= w) then Self.Errors.Add('WARNING: '+ExtractFileName(filename)+' Relief navestidlo '+IntToStr(i)+': symbol presahuje sirku reliefu');
      if ((blk as TNavestidlo).Position.Y >= h) then Self.Errors.Add('WARNING: '+ExtractFileName(filename)+' Relief navestidlo '+IntToStr(i)+': symbol presahuje vysku reliefu');
 
-     (blk as TNavestidlo).SymbolID   := inifile.ReadInteger('N'+IntToStr(i),'S',0);
+     (blk as TNavestidlo).SymbolID := inifile.ReadInteger('N'+IntToStr(i),'S',0);
      blk.OblRizeni := inifile.ReadInteger('N'+IntToStr(i),'OR',-1) + start_OR;
      if (blk.OblRizeni = start_OR-1) then Self.Errors.Add('ERROR: '+ExtractFileName(filename)+' Relief navestidlo '+IntToStr(i)+': neni navaznost na oblast rizeni');
+
+     TNavestidlo(blk).Sudy := Self.ORs[blk.OblRizeni].LichyLtoR xor TNavestidlo(blk).SymbolDirLeft();
 
      case ((blk as TNavestidlo).SymbolID) of
       0,4 : (blk as TNavestidlo).UsekPred := Self.GetUsekPredID(Point((blk as TNavestidlo).Position.X-1, (blk as TNavestidlo).Position.Y), blk.OblRizeni);
@@ -550,24 +552,9 @@ begin
       begin
        nav := (tblk.graph_blk[j] as TNavestidlo);
        nav2 := (tblk.graph_blk[j+1] as TNavestidlo);
-       case (nav.SymbolID) of
-        0,4:begin
-             case (nav.SymbolID) of
-              0,4:if ((Self.ORs[nav.OblRizeni].Lichy xor 0) <> (Self.ORs[nav2.OblRizeni].Lichy xor 0)) then
-                    Self.Errors.Add('ERROR: Relief technologicke navestidlo '+IntToStr(tblk.id)+': navestidlo nema stejny smer ve stanicich '+Self.ORs[nav.OblRizeni].Name+', '+Self.ORs[nav2.OblRizeni].Name);
-              1,5:if ((Self.ORs[nav.OblRizeni].Lichy xor 0) <> (Self.ORs[nav2.OblRizeni].Lichy xor 1)) then
-                    Self.Errors.Add('ERROR: Relief technologicke navestidlo '+IntToStr(tblk.id)+': navestidlo nema stejny smer ve stanicich '+Self.ORs[nav.OblRizeni].Name+', '+Self.ORs[nav2.OblRizeni].Name);
-             end;//case j+1
-         end;//case 0,4
-        1,5:begin
-             case (nav.SymbolID) of
-              0,4:if ((Self.ORs[nav.OblRizeni].Lichy xor 1) <> (Self.ORs[nav2.OblRizeni].Lichy xor 0)) then
-                    Self.Errors.Add('ERROR: Relief technologicke navestidlo '+IntToStr(tblk.id)+': navestidlo nema stejny smer ve stanicich '+Self.ORs[nav.OblRizeni].Name+', '+Self.ORs[nav2.OblRizeni].Name);
-              1,5:if ((Self.ORs[nav.OblRizeni].Lichy xor 1) <> (Self.ORs[nav2.OblRizeni].Lichy xor 1)) then
-                    Self.Errors.Add('ERROR: Relief technologicke navestidlo '+IntToStr(tblk.id)+': navestidlo nema stejny smer ve stanicich '+Self.ORs[nav.OblRizeni].Name+', '+Self.ORs[nav2.OblRizeni].Name);
-             end;//case j+1
-         end;//case 1,5
-       end;//case i
+       if (nav.Sudy <> nav2.Sudy) then
+         Self.Errors.Add('ERROR: Relief technologicke navestidlo '+IntToStr(tblk.id)+
+            ': navestidlo nema stejny smer ve stanicich '+Self.ORs[nav.OblRizeni].Name+', '+Self.ORs[nav2.OblRizeni].Name);
       end;// for j
 
     end;//if navestidlo
@@ -651,9 +638,9 @@ begin
           4,5:str := str + '1;';
          end;//case
 
-         case (Self.ORs[tblk.graph_blk[0].OblRizeni].Lichy xor ((tblk.graph_blk[0] as TNavestidlo).SymbolID mod 2)) of
-          0:str := str + '0;';
-          1:str := str + '1;';
+         case ((tblk.graph_blk[0] as TNavestidlo).Sudy) of
+          False: str := str + '0;';
+          True: str := str + '1;';
          end;
 
          //usek pred id

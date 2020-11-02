@@ -41,8 +41,11 @@ TNavestidlo = class(TGraphBlok)
   Position:TPoint;
   SymbolID:Integer;
   OblRizeni:Integer;
+  Sudy: Boolean;
 
   UsekPred:Integer;    //technologicky usek
+
+  function SymbolDirLeft(): Boolean;
 end;//Navestidlo
 
 TBlikPoint = record
@@ -130,6 +133,13 @@ begin
  Self.StaticPositions.Free();
  Self.BlikPositions.Free();
  inherited;
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+
+function TNavestidlo.SymbolDirLeft(): Boolean;
+begin
+ Result := (Self.SymbolID = 1) or (Self.SymbolID = 5);
 end;
 
 ////////////////////////////////////////////////////////////////////////////////

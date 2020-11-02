@@ -41,7 +41,7 @@ type
   Name:string;
   ShortName:string;
   id:string;
-  Lichy:Byte;
+  LichyLtoR:Boolean;
   Rights:TORRights;
   Osvetleni:TList<TOsv>;
   Poss:TPoss;
@@ -91,7 +91,7 @@ begin
    Self.Name       := data_main[0];
    Self.ShortName  := data_main[1];
    Self.id         := data_main[2];
-   Self.Lichy      := StrToInt(data_main[3]);
+   Self.LichyLtoR  := StrToBool(data_main[3]);
    Self.Poss.DKOr  := StrToInt(data_main[4]);
 
    Self.Rights.ModCasStart := StrToBool(data_main[5]);
