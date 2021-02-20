@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, Menus, StdCtrls, ComCtrls, ActnList, Panel, StrUtils;
+  Dialogs, Menus, StdCtrls, ComCtrls, ActnList, Panel, StrUtils, System.Actions;
 
 const
   _SUF_OBJECT = '.opnl';
