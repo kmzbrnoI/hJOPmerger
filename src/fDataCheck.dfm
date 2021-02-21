@@ -33,7 +33,5 @@ object F_DataCheck: TF_DataCheck
     TabOrder = 0
     ViewStyle = vsReport
     OnCustomDrawItem = LV_ErrorsCustomDrawItem
-    ExplicitWidth = 635
-    ExplicitHeight = 300
   end
 end

@@ -1,4 +1,5 @@
 // JCL_DEBUG_EXPERT_INSERTJDBG OFF
+// JCL_DEBUG_EXPERT_GENERATEJDBG OFF
 program hJOPmerger;
 
 //tento program slucuje naeditovane panely (*.opnl) do 1 souboru, ktery potrebuje server (= technologie) (*.spnl)

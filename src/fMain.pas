@@ -38,8 +38,7 @@ type
     B_Export: TButton;
     A_Export: TAction;
     procedure MI_AboutClick(Sender: TObject);
-    procedure LV_InputFilesChange(Sender: TObject; Item: TListItem;
-      Change: TItemChange);
+    procedure LV_InputFilesChange(Sender: TObject; Item: TListItem; Change: TItemChange);
     procedure F_FileOpenExecute(Sender: TObject);
     procedure A_FileCloseExecute(Sender: TObject);
     procedure A_CheckExecute(Sender: TObject);
@@ -52,9 +51,9 @@ type
   private
     { Private declarations }
   public
-    Relief:TRelief;
+    Relief: TRelief;
 
-    procedure AddFile(filename:string);
+    procedure AddFile(filename: string);
   end;
 
 var
@@ -67,136 +66,139 @@ implementation
 uses Verze, fDataCheck;
 
 procedure TF_Main.A_CheckExecute(Sender: TObject);
-var i:Integer;
-    fnames:TStrings;
+var i: Integer;
+  fnames: TStrings;
 begin
- fnames := TStringList.Create();
- try
-   for i := 0 to Self.LV_InputFiles.Items.Count-1 do
-     fnames.Add(Self.LV_InputFiles.Items.Item[i].Caption);
+  fnames := TStringList.Create();
+  try
+    for i := 0 to Self.LV_InputFiles.Items.Count - 1 do
+      fnames.Add(Self.LV_InputFiles.Items.Item[i].Caption);
 
-   try
-     Self.Relief.FilesLoad(fnames);
-   except
-     on E:Exception do
+    try
+      Self.Relief.FilesLoad(fnames);
+    except
+      on E: Exception do
       begin
-       Application.MessageBox(PChar('Chyba při načítání souborů reliéfů:'+#13#10+E.Message+#13#10+
-        'Opravte chyby v souboru panelu a načtětě soubor znovu!'), 'Chyba', MB_OK OR MB_ICONERROR);
-       Exit();
+        Application.MessageBox(PChar('Chyba při načítání souborů reliéfů:' + #13#10 + E.Message + #13#10 +
+          'Opravte chyby v souboru panelu a načtětě soubor znovu!'), 'Chyba', MB_OK OR MB_ICONERROR);
+        Exit();
       end;
-   end;
- finally
-  fnames.Free();
- end;
-
- try
-   Self.Relief.Merge();
- except
-   on E:Exception do
-    begin
-     Application.MessageBox(PChar('Chyba při spojování souborů reliéfů:'+#13#10+E.Message), 'Chyba', MB_OK OR MB_ICONERROR);
-     Exit();
     end;
- end;
+  finally
+    fnames.Free();
+  end;
 
- try
-   fnames := Self.Relief.CheckValid();
-   F_DataCheck.OpenForm(fnames);
- except
-   on E:Exception do
+  try
+    Self.Relief.Merge();
+  except
+    on E: Exception do
     begin
-     Application.MessageBox(PChar('Chyba při kontrole validity souborů reliéfů:'+#13#10+E.Message), 'Chyba', MB_OK OR MB_ICONERROR);
-     Exit();
+      Application.MessageBox(PChar('Chyba při spojování souborů reliéfů:' + #13#10 + E.Message), 'Chyba',
+        MB_OK OR MB_ICONERROR);
+      Exit();
     end;
- end;
+  end;
 
- Self.A_Export.Enabled := true;
+  try
+    fnames := Self.Relief.CheckValid();
+    F_DataCheck.OpenForm(fnames);
+  except
+    on E: Exception do
+    begin
+      Application.MessageBox(PChar('Chyba při kontrole validity souborů reliéfů:' + #13#10 + E.Message), 'Chyba',
+        MB_OK OR MB_ICONERROR);
+      Exit();
+    end;
+  end;
+
+  Self.A_Export.Enabled := true;
 end;
 
 procedure TF_Main.A_ExportExecute(Sender: TObject);
 begin
- try
-   Self.Relief.ExportData(Self.E_OutputFileName.Text);
-   Application.MessageBox(PChar('Export proběhl úspěšně'+#13#10+'Vytvořen soubor '+Self.E_OutputFileName.Text),
-     'Info', MB_OK OR MB_ICONINFORMATION);
- except
-   on E:Exception do
-     Application.MessageBox(PChar('Export se nezdařil:'+#13#10+E.Message),
-       'Varování', MB_OK OR MB_ICONWARNING);
- end;
+  try
+    Self.Relief.ExportData(Self.E_OutputFileName.Text);
+    Application.MessageBox(PChar('Export proběhl úspěšně' + #13#10 + 'Vytvořen soubor ' + Self.E_OutputFileName.Text),
+      'Info', MB_OK OR MB_ICONINFORMATION);
+  except
+    on E: Exception do
+      Application.MessageBox(PChar('Export se nezdařil:' + #13#10 + E.Message), 'Varování', MB_OK OR MB_ICONWARNING);
+  end;
 end;
 
 procedure TF_Main.A_FileCloseExecute(Sender: TObject);
 begin
- Self.LV_InputFiles.Items.Delete(Self.LV_InputFiles.ItemIndex);
- if (Self.LV_InputFiles.Items.Count = 0) then Self.A_Check.Enabled := false;
- Self.A_Export.Enabled := false;
+  Self.LV_InputFiles.Items.Delete(Self.LV_InputFiles.ItemIndex);
+  if (Self.LV_InputFiles.Items.Count = 0) then
+    Self.A_Check.Enabled := false;
+  Self.A_Export.Enabled := false;
 end;
 
 procedure TF_Main.B_OutputProchazetClick(Sender: TObject);
 begin
- if (Self.SD_SaveSpnl.Execute(Self.Handle)) then
+  if (Self.SD_SaveSpnl.Execute(Self.Handle)) then
   begin
-   Self.E_OutputFileName.Text := Self.SD_SaveSpnl.FileName;
-   if (RightStr(Self.E_OutputFileName.Text,5) <> '.spnl') then Self.E_OutputFileName.Text := Self.E_OutputFileName.Text + '.spnl';
+    Self.E_OutputFileName.Text := Self.SD_SaveSpnl.filename;
+    if (RightStr(Self.E_OutputFileName.Text, 5) <> '.spnl') then
+      Self.E_OutputFileName.Text := Self.E_OutputFileName.Text + '.spnl';
   end;
 end;
 
 procedure TF_Main.FormCreate(Sender: TObject);
 begin
- Self.Relief := TRelief.Create();
+  Self.Relief := TRelief.Create();
 end;
 
 procedure TF_Main.FormDestroy(Sender: TObject);
 begin
- FreeAndNil(Self.Relief);
+  FreeAndNil(Self.Relief);
 end;
 
 procedure TF_Main.F_FileOpenExecute(Sender: TObject);
-var i:Integer;
+var i: Integer;
 begin
- if (Self.OD_OpenOpnl.Execute(Self.Handle)) then
+  if (Self.OD_OpenOpnl.Execute(Self.Handle)) then
   begin
-   for i := 0 to Self.OD_OpenOpnl.Files.Count-1 do
-     Self.AddFile(Self.OD_OpenOpnl.Files[i]);
-  end;//if
+    for i := 0 to Self.OD_OpenOpnl.Files.Count - 1 do
+      Self.AddFile(Self.OD_OpenOpnl.Files[i]);
+  end; // if
 end;
 
-procedure TF_Main.LV_InputFilesChange(Sender: TObject; Item: TListItem;
-  Change: TItemChange);
+procedure TF_Main.LV_InputFilesChange(Sender: TObject; Item: TListItem; Change: TItemChange);
 begin
- Self.A_FileClose.Enabled := ((Sender as TListView).Selected <> nil);
+  Self.A_FileClose.Enabled := ((Sender as TListView).Selected <> nil);
 end;
 
 procedure TF_Main.LV_InputFilesDblClick(Sender: TObject);
 begin
- if ((Sender as TListView).Selected = nil) then
+  if ((Sender as TListView).Selected = nil) then
   begin
-   Self.F_FileOpenExecute(self);
+    Self.F_FileOpenExecute(Self);
   end else begin
-   Self.A_FileCloseExecute(self);
+    Self.A_FileCloseExecute(Self);
   end;
 end;
 
 procedure TF_Main.MI_AboutClick(Sender: TObject);
 begin
- Application.MessageBox(PChar('hJOPmerger'+#13#10+'Verze: '+GetVer(Application.ExeName)+#13#10+'Vytvořil Jan Horáček (c) 2013-2017 pro KMŽ Brno I'),'Info',MB_OK OR MB_ICONINFORMATION);
+  Application.MessageBox(PChar('hJOPmerger' + #13#10 + 'Verze: ' + GetVer(Application.ExeName) + #13#10 +
+    'Vytvořil Jan Horáček (c) 2013-2021 pro KMŽ Brno I'), 'Info', MB_OK OR MB_ICONINFORMATION);
 end;
 
 procedure TF_Main.MI_AppExitClick(Sender: TObject);
 begin
- Self.Close();
+  Self.Close();
 end;
 
-procedure TF_Main.AddFile(filename:string);
-var LI:TListItem;
+procedure TF_Main.AddFile(filename: string);
+var LI: TListItem;
 begin
- LI := Self.LV_InputFiles.Items.Add;
- LI.Caption := filename;
+  LI := Self.LV_InputFiles.Items.Add;
+  LI.Caption := filename;
 
- Self.A_Check.Enabled := true;
- if (Self.A_Export.Enabled) then
-   Self.A_Export.Enabled := false;
+  Self.A_Check.Enabled := true;
+  if (Self.A_Export.Enabled) then
+    Self.A_Export.Enabled := false;
 end;
 
-end.//unit
+end.// unit

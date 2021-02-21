@@ -9,12 +9,12 @@ uses
 type
   TF_DataCheck = class(TForm)
     LV_Errors: TListView;
-    procedure LV_ErrorsCustomDrawItem(Sender: TCustomListView; Item: TListItem;
-      State: TCustomDrawState; var DefaultDraw: Boolean);
+    procedure LV_ErrorsCustomDrawItem(Sender: TCustomListView; Item: TListItem; State: TCustomDrawState;
+      var DefaultDraw: Boolean);
   private
     { Private declarations }
   public
-    procedure OpenForm(data:TStrings);
+    procedure OpenForm(data: TStrings);
   end;
 
 var
@@ -24,29 +24,31 @@ implementation
 
 {$R *.dfm}
 
-procedure TF_DataCheck.LV_ErrorsCustomDrawItem(Sender: TCustomListView;
-  Item: TListItem; State: TCustomDrawState; var DefaultDraw: Boolean);
+procedure TF_DataCheck.LV_ErrorsCustomDrawItem(Sender: TCustomListView; Item: TListItem; State: TCustomDrawState;
+  var DefaultDraw: Boolean);
 begin
- Self.LV_Errors.Canvas.Brush.Color := $FFFFFF;
+  Self.LV_Errors.Canvas.Brush.Color := $FFFFFF;
 
- if (LeftStr(Item.SubItems.Strings[0],5) = 'ERROR') then Self.LV_Errors.Canvas.Brush.Color := $CCCCFF;
- if (LeftStr(Item.SubItems.Strings[0],5) = 'WARNI') then Self.LV_Errors.Canvas.Brush.Color := $CCFFFF;
+  if (LeftStr(Item.SubItems.Strings[0], 5) = 'ERROR') then
+    Self.LV_Errors.Canvas.Brush.Color := $CCCCFF;
+  if (LeftStr(Item.SubItems.Strings[0], 5) = 'WARNI') then
+    Self.LV_Errors.Canvas.Brush.Color := $CCFFFF;
 end;
 
-procedure TF_DataCheck.OpenForm(data:TStrings);
-var i:Integer;
-    LI:TListItem;
+procedure TF_DataCheck.OpenForm(data: TStrings);
+var i: Integer;
+  LI: TListItem;
 begin
- Self.LV_Errors.Clear();
+  Self.LV_Errors.Clear();
 
- for i := 0 to data.Count-1 do
+  for i := 0 to data.Count - 1 do
   begin
-   Li := Self.LV_Errors.Items.Add;
-   LI.Caption := IntToStr(i);
-   LI.SubItems.Add(data[i]);
-  end;//for i
+    LI := Self.LV_Errors.Items.Add;
+    LI.Caption := IntToStr(i);
+    LI.SubItems.Add(data[i]);
+  end; // for i
 
- Self.Show();
-end;//procedure
+  Self.Show();
+end; // procedure
 
-end.//unit
+end.// unit
