@@ -10,7 +10,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Controls, IniFiles,
-  Forms, OblastRizeni, Generics.Collections, StrUtils, Bloky,
+  Forms, OblastRizeni, Generics.Collections, StrUtils, Bloky, Types,
   Generics.Defaults, Math;
 
 const
