@@ -144,7 +144,7 @@ end;
 
 // nacitani 1 souboru
 procedure TRelief.FileLoad(const filename: string);
-var i, j, return, id: Integer;
+var i, j, id: Integer;
   inifile: TMemIniFile;
   Obj, ver, key: string;
   verWord: Word;
