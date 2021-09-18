@@ -6,7 +6,7 @@ uses Types, Generics.Collections;
 
 type
 
-  TBlkType = (usek, navestidlo, vyhybka, prejezd, popisek, uvazka, uvazka_spr, zamek, vykolejka, rozp, pomocny);
+  TBlkType = (usek, navestidlo, vyhybka, prejezd, popisek, uvazka, uvazka_spr, zamek, vykolejka, rozp, pomocny, pst);
 
   // abstraktni trida, ze ktere dedi graficke bloky
   TGraphBlok = class
@@ -92,7 +92,7 @@ type
     Blok: Integer;
     Pos: TPoint;
     usek: Integer; // index useku, na kterem je vykolejka
-    // zbytek irelevatni
+    // zbytek irelevantni
   end;
 
   TRozp = class(TGraphBlok)
@@ -100,6 +100,10 @@ type
   end;
 
   TPomocny = class(TGraphBlok)
+    Pos: TPoint;
+  end;
+
+  TPSt = class(TGraphBlok)
     Pos: TPoint;
   end;
 

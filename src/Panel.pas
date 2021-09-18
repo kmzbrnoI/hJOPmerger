@@ -18,8 +18,9 @@ const
   _FILEVERSION_11 = $0101;
   _FILEVERSION_12 = $0102;
   _FILEVERSION_13 = $0103;
+  _FILEVERSION_20 = $0200;
 
-  _FileVersion_accept: array [0 .. 2] of string = ('1.1', '1.2', '1.3');
+  _FileVersion_accept: array [0 .. 3] of string = ('1.1', '1.2', '1.3', '2.0');
 
 type
 
@@ -120,12 +121,10 @@ end;
 // nacitani vsech souboru
 // vraci index v hi, chybovy kod v lo
 procedure TRelief.FilesLoad(const filenames: TStrings);
-var filename: string;
-  techBlk: TTechBlok;
 begin
   Self.Reset();
 
-  for filename in filenames do
+  for var filename in filenames do
   begin
     try
       Self.FileLoad(filename);
@@ -135,7 +134,7 @@ begin
     end;
   end;
 
-  for techBlk in Self.TechBloky.Values do
+  for var techBlk in Self.TechBloky.Values do
     Self.TechBlokySorted.Add(techBlk);
   Self.TechBlokySorted.Sort();
 end;
@@ -144,18 +143,12 @@ end;
 
 // nacitani 1 souboru
 procedure TRelief.FileLoad(const filename: string);
-var i, j, id: Integer;
-  inifile: TMemIniFile;
-  Obj, ver, key: string;
+var inifile: TMemIniFile;
   verWord: Word;
-  sect_str, strs: TStrings;
   start_OR: Integer;
-  w, h: Integer;
   blk: TGraphBlok;
   cnt: Integer;
   versionOk: Boolean;
-  sym: TReliefSym;
-  bp: TBlikPoint;
 begin
   // kontrola existence
   if (not FileExists(filename)) then
@@ -164,9 +157,9 @@ begin
   inifile := TMemIniFile.Create(filename, TEncoding.UTF8);
   try
     // kontrola verze
-    ver := inifile.ReadString('G', 'ver', 'invalid');
+    var ver := inifile.ReadString('G', 'ver', 'invalid');
     versionOk := false;
-    for i := 0 to Length(_FileVersion_accept) - 1 do
+    for var i := 0 to Length(_FileVersion_accept) - 1 do
     begin
       if (ver = _FileVersion_accept[i]) then
       begin
@@ -183,27 +176,30 @@ begin
         Exit();
     end;
 
-    strs := TStringList.Create();
-    try
-      ExtractStrings(['.'], [], PChar(ver), strs);
-      verWord := (StrToInt(strs[0]) shl 8) + StrToInt(strs[1]);
-    finally
-      strs.Free();
+    begin
+      var strs: TStrings := TStringList.Create();
+      try
+        ExtractStrings(['.'], [], PChar(ver), strs);
+        verWord := (StrToInt(strs[0]) shl 8) + StrToInt(strs[1]);
+      finally
+        strs.Free();
+      end;
     end;
 
+    var Obj: string;
     DateTimeToString(Obj, 'yyyy-mm-dd hh:nn:ss', Now);
     Self.Errors.Add('Loading validator: ' + Obj + ': ' + ExtractFileName(filename));
 
-    h := inifile.ReadInteger('P', 'H', 0);
-    w := inifile.ReadInteger('P', 'W', 0);
+    var h := inifile.ReadInteger('P', 'H', 0);
+    var w := inifile.ReadInteger('P', 'W', 0);
 
     start_OR := Self.ORs.Count;
 
     // oblasti rizeni
-    sect_str := TStringList.Create();
+    var sect_str: TStrings := TStringList.Create();
     try
       inifile.ReadSection('OR', sect_str);
-      for key in sect_str do
+      for var key in sect_str do
         Self.ORs.Add(TOR.Create(inifile.ReadString('OR', key, '')));
     finally
       sect_str.Free();
@@ -211,9 +207,9 @@ begin
 
     // useky
     cnt := inifile.ReadInteger('P', 'U', 0);
-    for i := 0 to cnt - 1 do
+    for var i := 0 to cnt - 1 do
     begin
-      id := inifile.ReadInteger('U' + IntToStr(i), 'B', -1);
+      var id := inifile.ReadInteger('U' + IntToStr(i), 'B', -1);
       if (id = -1) then
         Self.Errors.Add('ERROR: ' + ExtractFileName(filename) + ' Relief usek ' + IntToStr(i) +
           ': neni navaznost na technologicky blok');
@@ -231,8 +227,9 @@ begin
       // symbols
       Obj := inifile.ReadString('U' + IntToStr(i), 'S', '');
       (blk as TUsek).Symbols.Clear();
-      for j := 0 to (Length(Obj) div 8) - 1 do
+      for var j := 0 to (Length(Obj) div 8) - 1 do
       begin
+        var sym: TReliefSym;
         sym.Position.X := StrToIntDef(copy(Obj, j * 8 + 1, 3), 0);
         sym.Position.Y := StrToIntDef(copy(Obj, j * 8 + 4, 3), 0);
         sym.SymbolID := StrToIntDef(copy(Obj, j * 8 + 7, 2), 0);
@@ -257,9 +254,9 @@ begin
 
     // navestidla
     cnt := inifile.ReadInteger('P', 'N', 0);
-    for i := 0 to cnt - 1 do
+    for var i := 0 to cnt - 1 do
     begin
-      id := inifile.ReadInteger('N' + IntToStr(i), 'B', -1);
+      var id := inifile.ReadInteger('N' + IntToStr(i), 'B', -1);
 
       if (id = -1) then
         Self.Errors.Add('ERROR: ' + ExtractFileName(filename) + ' Relief navestidlo ' + IntToStr(i) +
@@ -303,9 +300,9 @@ begin
 
   // pomocne symboly
   cnt := inifile.ReadInteger('P', 'P', 0);
-  for i := 0 to cnt - 1 do
+  for var i := 0 to cnt - 1 do
   begin
-    id := inifile.ReadInteger('P' + IntToStr(i), 'B', -1);
+    var id := inifile.ReadInteger('P' + IntToStr(i), 'B', -1);
     if (id > -1) then
     begin
       blk := TPomocny.Create();
@@ -316,9 +313,9 @@ begin
 
   // vyhybky
   cnt := inifile.ReadInteger('P', 'V', 0);
-  for i := 0 to cnt - 1 do
+  for var i := 0 to cnt - 1 do
   begin
-    id := inifile.ReadInteger('V' + IntToStr(i), 'B', -1);
+    var id := inifile.ReadInteger('V' + IntToStr(i), 'B', -1);
     if (id = -1) then
       Self.Errors.Add('ERROR: ' + ExtractFileName(filename) + ' Relief vyhybka ' + IntToStr(i) +
         ': neni navaznost na technologicky blok');
@@ -351,9 +348,9 @@ begin
 
   // prejezdy
   cnt := inifile.ReadInteger('P', 'PRJ', 0);
-  for i := 0 to cnt - 1 do
+  for var i := 0 to cnt - 1 do
   begin
-    id := inifile.ReadInteger('PRJ' + IntToStr(i), 'B', -1);
+    var id := inifile.ReadInteger('PRJ' + IntToStr(i), 'B', -1);
     if (id = -1) then
       Self.Errors.Add('ERROR: ' + ExtractFileName(filename) + ' Relief prejezd ' + IntToStr(i) +
         ': neni navaznost na technologicky blok');
@@ -365,8 +362,9 @@ begin
 
     Obj := inifile.ReadString('PRJ' + IntToStr(i), 'BP', '');
     (blk as TPrejezd).BlikPositions.Clear();
-    for j := 0 to (Length(Obj) div 9) - 1 do
+    for var j := 0 to (Length(Obj) div 9) - 1 do
     begin
+      var bp: TBlikPoint;
       if (verWord >= _FILEVERSION_13) then
       begin
         bp.Pos.X := StrToIntDef(copy(Obj, j * 16 + 1, 3), 0);
@@ -383,7 +381,7 @@ begin
 
     Obj := inifile.ReadString('PRJ' + IntToStr(i), 'SP', '');
     (blk as TPrejezd).StaticPositions.Count := (Length(Obj) div 6);
-    for j := 0 to (blk as TPrejezd).StaticPositions.Count - 1 do
+    for var j := 0 to (blk as TPrejezd).StaticPositions.Count - 1 do
     begin
       (blk as TPrejezd).StaticPositions.Add(Point(StrToIntDef(copy(Obj, j * 6 + 1, 3), 0),
         StrToIntDef(copy(Obj, j * 6 + 4, 3), 0)))
@@ -394,9 +392,9 @@ begin
 
   // popisky
   cnt := inifile.ReadInteger('P', 'T', 0);
-  for i := 0 to cnt - 1 do
+  for var i := 0 to cnt - 1 do
   begin
-    id := inifile.ReadInteger('T' + IntToStr(i), 'B', -1);
+    var id := inifile.ReadInteger('T' + IntToStr(i), 'B', -1);
     if (id < 0) then
       continue;
 
@@ -416,9 +414,9 @@ begin
 
   // uvazky
   cnt := inifile.ReadInteger('P', 'Uv', 0);
-  for i := 0 to cnt - 1 do
+  for var i := 0 to cnt - 1 do
   begin
-    id := inifile.ReadInteger('Uv' + IntToStr(i), 'B', -1);
+    var id := inifile.ReadInteger('Uv' + IntToStr(i), 'B', -1);
     if (id = -1) then
       Self.Errors.Add('ERROR: ' + ExtractFileName(filename) + ' Relief uvazka ' + IntToStr(i) +
         ': neni navaznost na technologicky blok');
@@ -439,9 +437,9 @@ begin
   // uvazky spr se ve skutenocti nacitaji jako uavzky, aby doslo k merge
   // data o uvazky spr se tak skutecne nenactou, ale to nam nevadi - potrebujeme jen ID
   cnt := inifile.ReadInteger('P', 'UvS', 0);
-  for i := 0 to cnt - 1 do
+  for var i := 0 to cnt - 1 do
   begin
-    id := inifile.ReadInteger('UvS' + IntToStr(i), 'B', -1);
+    var id := inifile.ReadInteger('UvS' + IntToStr(i), 'B', -1);
     if (id = -1) then
       Self.Errors.Add('ERROR: ' + ExtractFileName(filename) + ' Relief uvazka spr ' + IntToStr(i) +
         ': neni navaznost na technologicky blok');
@@ -455,9 +453,9 @@ begin
 
   // zamky
   cnt := inifile.ReadInteger('P', 'Z', 0);
-  for i := 0 to cnt - 1 do
+  for var i := 0 to cnt - 1 do
   begin
-    id := inifile.ReadInteger('Z' + IntToStr(i), 'B', -1);
+    var id := inifile.ReadInteger('Z' + IntToStr(i), 'B', -1);
     if (id = -1) then
       Self.Errors.Add('ERROR: ' + ExtractFileName(filename) + ' Relief zamek ' + IntToStr(i) +
         ': neni navaznost na technologicky blok');
@@ -475,9 +473,9 @@ begin
 
   // vykolejky
   cnt := inifile.ReadInteger('P', 'Vyk', 0);
-  for i := 0 to cnt - 1 do
+  for var i := 0 to cnt - 1 do
   begin
-    id := inifile.ReadInteger('Vyk' + IntToStr(i), 'B', -1);
+    var id := inifile.ReadInteger('Vyk' + IntToStr(i), 'B', -1);
     if (id = -1) then
       Self.Errors.Add('ERROR: ' + ExtractFileName(filename) + ' Relief vykolejka ' + IntToStr(i) +
         ': neni navaznost na technologicky blok');
@@ -497,9 +495,9 @@ begin
 
   // rozpojovace
   cnt := inifile.ReadInteger('P', 'R', 0);
-  for i := 0 to cnt - 1 do
+  for var i := 0 to cnt - 1 do
   begin
-    id := inifile.ReadInteger('R' + IntToStr(i), 'B', -1);
+    var id := inifile.ReadInteger('R' + IntToStr(i), 'B', -1);
     if (id = -1) then
       Self.Errors.Add('ERROR: ' + ExtractFileName(filename) + ' Relief rozpojovac ' + IntToStr(i) +
         ': neni navaznost na technologicky blok');
@@ -514,6 +512,27 @@ begin
 
     Self.AddGraphBlk(blk, id, rozp);
   end;
+
+  // pomocna stavedla
+  cnt := inifile.ReadInteger('P', 'PSt', 0);
+  for var i := 0 to cnt - 1 do
+  begin
+    var id := inifile.ReadInteger('PSt' + IntToStr(i), 'B', -1);
+    if (id = -1) then
+      Self.Errors.Add('ERROR: ' + ExtractFileName(filename) + ' Relief pomocne stavedlo ' + IntToStr(i) +
+        ': neni navaznost na technologicky blok');
+    if (id < 0) then
+      continue;
+
+    blk := TPSt.Create();
+    blk.oblRizeni := inifile.ReadInteger('PSt' + IntToStr(i), 'OR', -1) + start_OR;
+
+    (blk as TPSt).Pos.X := inifile.ReadInteger('PSt' + IntToStr(i), 'X', 0);
+    (blk as TPSt).Pos.Y := inifile.ReadInteger('PSt' + IntToStr(i), 'Y', 0);
+
+    Self.AddGraphBlk(blk, id, pst);
+  end;
+
 
   Self.Errors.Add('--- Loading check complete ---');
 finally
@@ -554,21 +573,19 @@ end;
 
 // checking data valid
 function TRelief.CheckValid(): TStrings;
-var str: string;
-  j: Integer;
-  nav, nav2: TNavestidlo;
-  vyh: TVyhybka;
-  blk: TGraphBlok;
-  tblk: TTechBlok;
 begin
   Self.Errors.Add('--- Spustena 2. faze validace: validator objektovych navaznosti ---');
-  DateTimeToString(str, 'yyyy-mm-dd hh:nn:ss', Now);
-  Self.Errors.Add(str);
+
+  begin
+    var str: string;
+    DateTimeToString(str, 'yyyy-mm-dd hh:nn:ss', Now);
+    Self.Errors.Add(str);
+  end;
 
   // kontrola prirazeni oblasti rizeni
-  for tblk in Self.TechBloky.Values do
+  for var tblk in Self.TechBloky.Values do
   begin
-    for blk in tblk.graph_blk do
+    for var blk in tblk.graph_blk do
       if (blk.oblRizeni >= Self.ORs.Count) then
         Self.Errors.Add('ERROR: Relief blok id ' + IntToStr(tblk.id) +
           ': definovana oblast rizeni, ktera neni v seznamu OR');
@@ -577,7 +594,7 @@ begin
     // kontrola stejneho cisla koleje
     if (tblk.typ = usek) then
     begin
-      for j := 0 to tblk.graph_blk.Count - 2 do
+      for var j := 0 to tblk.graph_blk.Count - 2 do
       begin
         if (TUsek(tblk.graph_blk[j]).cislo_koleje <> TUsek(tblk.graph_blk[j + 1]).cislo_koleje) then
           Self.Errors.Add('ERROR: Relief technologicky usek ' + IntToStr(tblk.id) +
@@ -592,10 +609,10 @@ begin
     begin
 
       // navestidlo
-      for j := 0 to tblk.graph_blk.Count - 2 do
+      for var j := 0 to tblk.graph_blk.Count - 2 do
       begin
-        nav := (tblk.graph_blk[j] as TNavestidlo);
-        nav2 := (tblk.graph_blk[j + 1] as TNavestidlo);
+        var nav := (tblk.graph_blk[j] as TNavestidlo);
+        var nav2 := (tblk.graph_blk[j + 1] as TNavestidlo);
         if (nav.Sudy <> nav2.Sudy) then
           Self.Errors.Add('ERROR: Relief technologicke navestidlo ' + IntToStr(tblk.id) +
             ': navestidlo nema stejny smer ve stanicich ' + Self.ORs[nav.oblRizeni].Name + ', ' +
@@ -609,9 +626,9 @@ begin
 
     if (tblk.typ = vyhybka) then
     begin
-      for j := 0 to tblk.graph_blk.Count - 2 do
+      for var j := 0 to tblk.graph_blk.Count - 2 do
       begin
-        vyh := (tblk.graph_blk[j] as TVyhybka);
+        var vyh := (tblk.graph_blk[j] as TVyhybka);
         if (vyh.Obj <> vyh.Obj) then
           Self.Errors.Add('ERROR: Relief technologicka vyhybka ' + IntToStr(tblk.id) +
             ': vyhybka ma navaznost na jiny blok ve stanicich ' + Self.ORs[vyh.oblRizeni].Name + ', ' +
@@ -629,10 +646,6 @@ end;
 
 procedure TRelief.ExportData(const filename: string);
 var ini: TMemIniFile;
-  i, j: Integer;
-  str: string;
-  tblk: TTechBlok;
-  oblr: TOR;
   ORsSorted: TList<TOR>;
 begin
   DeleteFile(filename);
@@ -644,13 +657,13 @@ begin
     try
       ORsSorted.AddRange(Self.ORs);
       ORsSorted.Sort();
-      for i := 0 to ORsSorted.Count - 1 do
+      for var i := 0 to ORsSorted.Count - 1 do
       begin
-        oblr := ORsSorted[i];
+        var oblr := ORsSorted[i];
         // ukladame specificky upravena data, protoze smysl ma ukladat jen data u vsech OR stejna
         // = nazev, zkratka a unikatni nazev
-        str := oblr.Name + ';' + oblr.ShortName + ';' + oblr.id + ';';
-        for j := 0 to oblr.Osvetleni.Count - 1 do
+        var str := oblr.Name + ';' + oblr.ShortName + ';' + oblr.id + ';';
+        for var j := 0 to oblr.Osvetleni.Count - 1 do
           str := str + '(' + IntToStr(oblr.Osvetleni[j].board) + '|' + IntToStr(oblr.Osvetleni[j].port) + '|' +
             oblr.Osvetleni[j].Name + ')';
         str := str + ';';
@@ -661,9 +674,9 @@ begin
     end;
 
     // useky
-    for tblk in Self.TechBlokySorted do
+    for var tblk in Self.TechBlokySorted do
     begin
-      str := Self.GetTechBlkOR(tblk) + ';';
+      var str := Self.GetTechBlkOR(tblk) + ';';
 
       case (tblk.typ) of
         TBlkType.usek:
@@ -727,28 +740,18 @@ end;
 function TRelief.BlkTypeToSectSpnlName(typ: TBlkType): string;
 begin
   case (typ) of
-    TBlkType.usek:
-      Result := 'U';
-    TBlkType.navestidlo:
-      Result := 'N';
-    TBlkType.vyhybka:
-      Result := 'V';
-    TBlkType.prejezd:
-      Result := 'PRJ';
-    TBlkType.popisek:
-      Result := 'T';
-    TBlkType.uvazka:
-      Result := 'Uv';
-    TBlkType.uvazka_spr:
-      Result := 'U';
-    TBlkType.zamek:
-      Result := 'Z';
-    TBlkType.vykolejka:
-      Result := 'V';
-    TBlkType.rozp:
-      Result := 'R';
-    TBlkType.pomocny:
-      Result := 'POM';
+    TBlkType.usek: Result := 'U';
+    TBlkType.navestidlo: Result := 'N';
+    TBlkType.vyhybka: Result := 'V';
+    TBlkType.prejezd: Result := 'PRJ';
+    TBlkType.popisek: Result := 'T';
+    TBlkType.uvazka: Result := 'Uv';
+    TBlkType.uvazka_spr: Result := 'U';
+    TBlkType.zamek: Result := 'Z';
+    TBlkType.vykolejka: Result := 'V';
+    TBlkType.rozp: Result := 'R';
+    TBlkType.pomocny: Result := 'POM';
+    TBlkType.pst: Result := 'PSt';
   else
     raise Exception.Create('Invalid block type!');
   end;
@@ -759,24 +762,21 @@ end;
 // vraci technologicke ID bloku, ktery je na pozici UsekPos a v OR oblRizeni
 // vyuzivano pri ziskavani bloku pred navestidly
 function TRelief.GetUsekPredID(UsekPos: TPoint; oblRizeni: Integer): Integer;
-var blk: TGraphBlok;
-  sym: TReliefSym;
-  tblk: TTechBlok;
 begin
   // prijdeme vsechny technologicke useky
-  for tblk in Self.TechBloky.Values do
+  for var tblk in Self.TechBloky.Values do
   begin
     if (tblk.typ <> usek) then
       continue;
 
     // projdeme vsechny useky na reliefu daneho tech. useku
-    for blk in tblk.graph_blk do
+    for var blk in tblk.graph_blk do
     begin
       if (blk.oblRizeni = oblRizeni) then
       begin
         // tady mame jisto, ze jsme ve spravne oblasti rizeni
         // prohleddame vsechny symboly bloku
-        for sym in (blk as TUsek).Symbols do
+        for var sym in (blk as TUsek).Symbols do
           if ((UsekPos.X = sym.Position.X) and (UsekPos.Y = sym.Position.Y)) then
             Exit(tblk.id);
       end; // if oblRizeni
@@ -789,8 +789,7 @@ end;
 /// /////////////////////////////////////////////////////////////////////////////
 
 function TRelief.GetTechBlkOR(tblk: TTechBlok): string;
-var i, j: Integer;
-  ret: array [0 .. _MAX_OR - 1] of Integer;
+var ret: array [0 .. _MAX_OR - 1] of Integer;
   retcnt: Integer;
   found: Boolean;
   blk: TGraphBlok;
@@ -801,7 +800,7 @@ begin
   for blk in tblk.graph_blk do
   begin
     found := false;
-    for j := 0 to retcnt - 1 do
+    for var j := 0 to retcnt - 1 do
       if (ret[j] = blk.oblRizeni) then
         found := true;
 
@@ -812,7 +811,7 @@ begin
     end;
   end; // for i
 
-  for i := 0 to retcnt - 1 do
+  for var i := 0 to retcnt - 1 do
     Result := Result + Self.ORs[ret[i]].id + '|';
 end;
 
@@ -838,11 +837,9 @@ end;
 // nahradi oblast rizeni u bloku s orig_or na new_or
 // pouzivano pri merge oblasti rizeni
 procedure TRelief.ReplaceBlkOR(orig_or: Integer; new_or: Integer);
-var graphBlok: TGraphBlok;
-  techBlok: TTechBlok;
 begin
-  for techBlok in Self.TechBloky.Values do
-    for graphBlok in techBlok.graph_blk do
+  for var techBlok in Self.TechBloky.Values do
+    for var graphBlok in techBlok.graph_blk do
       if (graphBlok.oblRizeni = orig_or) then
         graphBlok.oblRizeni := new_or;
 end;
@@ -852,14 +849,12 @@ end;
 // maze oblast rizeni
 // vyuzivano pri merge oblasti rizeni
 procedure TRelief.DeleteOR(index: Integer);
-var techBlok: TTechBlok;
-  graphBlok: TGraphBlok;
 begin
   Self.ORs.Delete(index);
 
   // vsem blokum, ktere mely OR tuto a vesti musime dekrementovat OR
-  for techBlok in Self.TechBloky.Values do
-    for graphBlok in techBlok.graph_blk do
+  for var techBlok in Self.TechBloky.Values do
+    for var graphBlok in techBlok.graph_blk do
       if (graphBlok.oblRizeni >= index) then
         graphBlok.oblRizeni := graphBlok.oblRizeni - 1;
 end;
@@ -882,14 +877,13 @@ end;
 /// /////////////////////////////////////////////////////////////////////////////
 
 procedure TRelief.FindSimilarORs(var or1: Integer; var or2: Integer);
-var i, j: Integer;
 begin
   or1 := -1;
   or2 := -1;
 
-  for i := 0 to Self.ORs.Count - 1 do
+  for var i := 0 to Self.ORs.Count - 1 do
   begin
-    for j := 0 to Self.ORs.Count - 1 do
+    for var j := 0 to Self.ORs.Count - 1 do
     begin
       if (i <> j) and (Self.ORs[i].id = Self.ORs[j].id) then
       begin
@@ -917,12 +911,11 @@ end;
 
 procedure TRelief.MergeOROsv(orig_or: TOR; new_or: TOR);
 var found: Boolean;
-  osvo, osvn: TOsv;
 begin
-  for osvo in orig_or.Osvetleni do
+  for var osvo in orig_or.Osvetleni do
   begin
     found := false;
-    for osvn in new_or.Osvetleni do
+    for var osvn in new_or.Osvetleni do
       if (osvn.Name = osvo.Name) then
         found := true;
     // sem by mohla prijit kontrola konzistence MTB vstupu a vystupu
@@ -935,10 +928,9 @@ end;
 /// /////////////////////////////////////////////////////////////////////////////
 
 class function TRelief.FileSupportedVersionsStr(): string;
-var i: Integer;
 begin
   Result := '';
-  for i := 0 to Length(_FileVersion_accept) - 1 do
+  for var i := 0 to Length(_FileVersion_accept) - 1 do
     Result := Result + _FileVersion_accept[i] + ', ';
   Result := LeftStr(Result, Length(Result) - 2);
 end;
