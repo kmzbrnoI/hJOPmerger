@@ -662,34 +662,33 @@ begin
         var oblr := ORsSorted[i];
         // ukladame specificky upravena data, protoze smysl ma ukladat jen data u vsech OR stejna
         // = nazev, zkratka a unikatni nazev
-        var str := oblr.Name + ';' + oblr.ShortName + ';' + oblr.id + ';';
+        var str := '{' + oblr.Name + '},' + oblr.ShortName + ',' + oblr.id + ',{';
         for var j := 0 to oblr.Osvetleni.Count - 1 do
-          str := str + '(' + IntToStr(oblr.Osvetleni[j].board) + '|' + IntToStr(oblr.Osvetleni[j].port) + '|' +
+          str := str + '(' + IntToStr(oblr.Osvetleni[j].board) + ',' + IntToStr(oblr.Osvetleni[j].port) + ',' +
             oblr.Osvetleni[j].Name + ')';
-        str := str + ';';
+        str := str + '}';
         ini.WriteString('OR', IntToStr(i), str);
       end;
     finally
       ORsSorted.Free();
     end;
 
-    // useky
     for var tblk in Self.TechBlokySorted do
     begin
-      var str := Self.GetTechBlkOR(tblk) + ';';
+      var str := Self.GetTechBlkOR(tblk) + ',';
 
       case (tblk.typ) of
         TBlkType.usek:
           begin
             if ((tblk.graph_blk[0] as TUsek).cislo_koleje <> '') then
-              str := str + '1;' + TUsek(tblk.graph_blk[0]).cislo_koleje + ';'
+              str := str + '1,' + TUsek(tblk.graph_blk[0]).cislo_koleje + ','
             else
-              str := str + '0;;';
+              str := str + '0,,';
 
             if ((tblk.graph_blk[0] as TUsek).spr_pos) then
-              str := str + '1;'
+              str := str + '1,'
             else
-              str := str + '0;';
+              str := str + '0,';
           end;
 
         TBlkType.navestidlo:
@@ -697,17 +696,17 @@ begin
             // typ symbolu
             case ((tblk.graph_blk[0] as TNavestidlo).SymbolID) of
               0, 1:
-                str := str + '0;';
+                str := str + '0,';
               // 2,3 jsou AB
               4, 5:
-                str := str + '1;';
+                str := str + '1,';
             end; // case
 
             case ((tblk.graph_blk[0] as TNavestidlo).Sudy) of
               false:
-                str := str + '0;';
+                str := str + '0,';
               true:
-                str := str + '1;';
+                str := str + '1,';
             end;
 
             // usek pred id
@@ -716,12 +715,12 @@ begin
 
         TBlkType.vyhybka:
           begin
-            str := str + IntToStr((tblk.graph_blk[0] as TVyhybka).Obj) + ';'; // navaznost na usek
+            str := str + IntToStr((tblk.graph_blk[0] as TVyhybka).Obj) + ','; // navaznost na usek
           end;
 
         TBlkType.vykolejka:
           begin
-            str := str + IntToStr((tblk.graph_blk[0] as TVykolejka).usek) + ';'; // navaznost na usek
+            str := str + IntToStr((tblk.graph_blk[0] as TVykolejka).usek) + ','; // navaznost na usek
           end;
 
       end;
@@ -791,15 +790,13 @@ end;
 function TRelief.GetTechBlkOR(tblk: TTechBlok): string;
 var ret: array [0 .. _MAX_OR - 1] of Integer;
   retcnt: Integer;
-  found: Boolean;
-  blk: TGraphBlok;
 begin
-  Result := '';
+  Result := '{';
 
   retcnt := 0;
-  for blk in tblk.graph_blk do
+  for var blk in tblk.graph_blk do
   begin
-    found := false;
+    var found := false;
     for var j := 0 to retcnt - 1 do
       if (ret[j] = blk.oblRizeni) then
         found := true;
@@ -809,10 +806,13 @@ begin
       retcnt := retcnt + 1;
       ret[retcnt - 1] := blk.oblRizeni;
     end;
-  end; // for i
+  end;
 
-  for var i := 0 to retcnt - 1 do
-    Result := Result + Self.ORs[ret[i]].id + '|';
+  for var i := 0 to retcnt - 2 do
+    Result := Result + Self.ORs[ret[i]].id + ',';
+  if (retcnt > 0) then
+    Result := Result + Self.ORs[ret[retcnt-1]].id;
+  Result := Result + '}';
 end;
 
 /// /////////////////////////////////////////////////////////////////////////////
