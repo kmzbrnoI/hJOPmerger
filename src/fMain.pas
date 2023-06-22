@@ -66,12 +66,11 @@ implementation
 uses Verze, fDataCheck;
 
 procedure TF_Main.A_CheckExecute(Sender: TObject);
-var i: Integer;
-  fnames: TStrings;
+var fnames: TStrings;
 begin
   fnames := TStringList.Create();
   try
-    for i := 0 to Self.LV_InputFiles.Items.Count - 1 do
+    for var i := 0 to Self.LV_InputFiles.Items.Count - 1 do
       fnames.Add(Self.LV_InputFiles.Items.Item[i].Caption);
 
     try
@@ -147,6 +146,7 @@ end;
 procedure TF_Main.FormCreate(Sender: TObject);
 begin
   Self.Relief := TRelief.Create();
+  Self.Caption := 'hJOPmerger – v'+Verze.GetVer(Application.ExeName);
 end;
 
 procedure TF_Main.FormDestroy(Sender: TObject);
@@ -155,11 +155,10 @@ begin
 end;
 
 procedure TF_Main.F_FileOpenExecute(Sender: TObject);
-var i: Integer;
 begin
   if (Self.OD_OpenOpnl.Execute(Self.Handle)) then
   begin
-    for i := 0 to Self.OD_OpenOpnl.Files.Count - 1 do
+    for var i := 0 to Self.OD_OpenOpnl.Files.Count - 1 do
       Self.AddFile(Self.OD_OpenOpnl.Files[i]);
   end; // if
 end;

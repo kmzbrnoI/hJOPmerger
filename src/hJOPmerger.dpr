@@ -15,8 +15,6 @@ uses
 
 {$R *.res}
 
-var i:Integer;
-
 begin
   Application.Initialize;
   Application.Title := 'hJOPmerger';
@@ -26,9 +24,9 @@ begin
   if (ParamCount > 0) then
    begin
     //open the file
-    for i := 1 to ParamCount do
-    F_Main.AddFile(ParamStr(i));
+    for var i := 1 to ParamCount do
+      F_Main.AddFile(ParamStr(i));
    end;
 
-  Application.Run;
+  Application.Run();
 end.
