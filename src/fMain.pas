@@ -181,7 +181,7 @@ end;
 procedure TF_Main.MI_AboutClick(Sender: TObject);
 begin
   Application.MessageBox(PChar('hJOPmerger' + #13#10 + 'Verze: ' + GetVer(Application.ExeName) + #13#10 +
-    'Vytvořil Jan Horáček (c) 2013-2021 pro KMŽ Brno I'), 'Info', MB_OK OR MB_ICONINFORMATION);
+    'Vytvořil Jan Horáček (c) 2013-2023 KMŽ Brno I'), 'Info', MB_OK OR MB_ICONINFORMATION);
 end;
 
 procedure TF_Main.MI_AppExitClick(Sender: TObject);
